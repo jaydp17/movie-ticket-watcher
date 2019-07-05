@@ -9,9 +9,9 @@ import (
 
 func main() {
 	bms := bookmyshow.BookMyShow{}
-	showDetails, err := bms.GetAvailableVenueCodes("ET00106002", "BANG", "20190705")
+	availableVenueCodes, err := bms.GetAvailableVenueCodes("ET00106002", "BANG", "20190705")
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Printf("%+v\n", showDetails)
+	fmt.Printf("%+v\n", availableVenueCodes)
 }

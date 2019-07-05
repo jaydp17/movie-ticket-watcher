@@ -19,7 +19,7 @@ const (
 )
 
 // GetAvailableVenueCodes fetches all the venue codes where the given movie is available
-func (b *BookMyShow) GetAvailableVenueCodes(childEventCode, regionCode, dateStr string) (BmsShowDetails, error) {
+func (b *BookMyShow) GetAvailableVenueCodes(childEventCode, regionCode, dateStr string) ([]string, error) {
 	url := "https://in.bookmyshow.com/api/v2/mobile/showtimes/byevent"
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("User-Agent", okHTTPUserAgent)
@@ -34,24 +34,39 @@ func (b *BookMyShow) GetAvailableVenueCodes(childEventCode, regionCode, dateStr 
 	res, err := client.Do(req)
 	if err != nil {
 		log.Fatalln(err)
-		return BmsShowDetails{}, err
+		return []string{}, err
 	}
 	defer res.Body.Close()
 
 	responseStr, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Fatalln(err)
-		return BmsShowDetails{}, err
+		return []string{}, err
 	}
 
 	var parsedResp bmsResponse
 	err = json.Unmarshal(responseStr, &parsedResp)
 	if err != nil {
 		log.Fatalln(err)
-		return BmsShowDetails{}, err
+		return []string{}, err
 	}
 
-	return parsedResp.ShowDetails[0], nil
+	if len(parsedResp.ShowDetails) == 0 {
+		// when there's no showDetails
+		return []string{}, nil
+	}
+
+	showDetail := parsedResp.ShowDetails[0]
+	availableVenueCodes := showDetail.getVenueCodes()
+	return availableVenueCodes, nil
+}
+
+func (showDetail *BmsShowDetails) getVenueCodes() []string {
+	var venueCodes []string
+	for _, venue := range showDetail.Venues {
+		venueCodes = append(venueCodes, venue.VenueCode)
+	}
+	return venueCodes
 }
 
 type bmsResponse struct {
