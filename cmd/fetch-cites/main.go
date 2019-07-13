@@ -23,5 +23,7 @@ func main() {
 	fmt.Printf("PayTM cities: %+v\n", pytmCities)
 
 	commonCities := core.MergeCities(bmsCities, pytmCities)
-	fmt.Printf("commonCities: %+v\n", commonCities)
+	if err := commonCities.Write(); err != nil {
+		panic(err)
+	}
 }

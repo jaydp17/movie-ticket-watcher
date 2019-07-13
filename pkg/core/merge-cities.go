@@ -6,7 +6,7 @@ import (
 )
 
 // MergeCities merges the cities obtained from the providers
-func MergeCities(bmsCities, pytmCities []providers.City) []dao.City {
+func MergeCities(bmsCities, pytmCities []providers.City) dao.Cities {
 	citiesMap := make(map[string]dao.City)
 
 	// bookmyshow cities
@@ -24,13 +24,13 @@ func MergeCities(bmsCities, pytmCities []providers.City) []dao.City {
 			existingCity.PaytmID = city.ID
 			citiesMap[city.Name] = existingCity
 		}
-		// we don't add cities that are not in BookMyShow
-		// and are in PayTM
 	}
-
-	var cities []dao.City
+	// we don't add cities that are not in both providers
+	var cities dao.Cities
 	for _, city := range citiesMap {
-		cities = append(cities, city)
+		if city.HasAllProviderIDs() {
+			cities = append(cities, city)
+		}
 	}
 	return cities
 }
