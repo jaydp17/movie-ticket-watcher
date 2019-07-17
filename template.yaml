@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    CodeUri: ./bin
+    Runtime: go1.x
+
+Resources:
+  GetAllRegions:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: get-all-regions
+      Events:
+        Event1:
+          Type: Api
+          Properties:
+            Path: /regions
+            Method: GET
