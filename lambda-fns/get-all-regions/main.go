@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/dao"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -19,9 +20,13 @@ type Response events.APIGatewayProxyResponse
 func Handler(ctx context.Context) (Response, error) {
 	var buf bytes.Buffer
 
-	body, err := json.Marshal(map[string]interface{}{
-		"message": "Go Serverless v1.0! Your function executed successfully!@@@🎉",
-	})
+	cities := dao.GetAllCities()
+	var allCities []*dao.City
+	for city := range cities {
+		allCities = append(allCities, city)
+	}
+
+	body, err := json.Marshal(allCities)
 	if err != nil {
 		return Response{StatusCode: 404}, err
 	}

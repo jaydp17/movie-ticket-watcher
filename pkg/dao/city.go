@@ -1,9 +1,11 @@
 package dao
 
 import (
+	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbattribute"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"log"
 	"math"
@@ -11,16 +13,58 @@ import (
 )
 
 type City struct {
-	ID           string
-	Name         string
-	BookmyshowID string
-	PaytmID      string
-	IsTopCity    bool
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	BookmyshowID string `json:"bookmyshowID,omitempty"`
+	PaytmID      string `json:"paytmID,omitempty"`
+	IsTopCity    bool   `json:"isTopCity"`
 }
 
 type Cities []City
 
 var CityTableName = db.GetFullTableName("cities")
+
+// Gets all the cities from the database
+func GetAllCities() <-chan *City {
+	scanInput := &dynamodb.ScanInput{
+		TableName:                aws.String(CityTableName),
+		ExpressionAttributeNames: map[string]string{"#NM": "Name", "#TC": "IsTopCity"},
+		ProjectionExpression:     aws.String("ID, #NM, #TC"),
+	}
+	req := db.Client.ScanRequest(scanInput)
+	paginator := dynamodb.NewScanPaginator(req)
+
+	pages := make(chan []map[string]dynamodb.AttributeValue)
+	cities := make(chan *City)
+
+	go func() {
+		for items := range pages {
+			for _, item := range items {
+				var city City
+				if err := dynamodbattribute.UnmarshalMap(item, &city); err != nil {
+					fmt.Println("Got error unmarshalling:")
+					fmt.Println(err.Error())
+					return
+				}
+				cities <- &city
+			}
+		}
+		close(cities)
+	}()
+
+	for paginator.Next(context.TODO()) {
+		page := paginator.CurrentPage()
+		pages <- page.Items
+	}
+	close(pages)
+
+	if err := paginator.Err(); err != nil {
+		fmt.Println("error in paginator")
+		fmt.Println(err)
+	}
+
+	return cities
+}
 
 // HasAllProviderIDs checks if a city object has all the provider IDs
 func (c *City) HasAllProviderIDs() bool {

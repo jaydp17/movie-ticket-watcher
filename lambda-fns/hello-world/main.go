@@ -19,7 +19,6 @@ type Response events.APIGatewayProxyResponse
 func Handler(ctx context.Context) (Response, error) {
 	var buf bytes.Buffer
 
-
 	body, err := json.Marshal(map[string]interface{}{
 		"message": "Go Serverless v1.0! Your function executed successfly!@!@🎉",
 	})
@@ -27,8 +26,6 @@ func Handler(ctx context.Context) (Response, error) {
 		return Response{StatusCode: 404}, err
 	}
 	json.HTMLEscape(&buf, body)
-
-
 
 	resp := Response{
 		StatusCode:      200,
