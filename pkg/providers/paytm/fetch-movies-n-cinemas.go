@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"github.com/imroc/req"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/dao"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 )
 
 const macOsUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
 
-func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]string, error) {
+func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []providers.Cinema, error) {
 	params := req.Param{
 		"groupResult": "true",
 		"city":        city.PaytmID,
@@ -18,14 +19,14 @@ func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]string, error) {
 	headers := req.Header{"User-Agent": macOsUserAgent}
 	res, err := req.Get("https://apiproxy-moviesv2.paytm.com/v2/movies/search", params, headers)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch PayTM Cinemas & movies: %v", err)
+		return nil, nil, fmt.Errorf("failed to fetch PayTM Cinemas & movies: %v", err)
 	}
 	var jsonRes paytmSearchResponse
 	if err := res.ToJSON(&jsonRes); err != nil {
-		return nil, fmt.Errorf("failed to parse response from PayTM: %v", err)
+		return nil, nil, fmt.Errorf("failed to parse response from PayTM: %v", err)
 	}
 	fmt.Printf("paytm response\n%+v\n", jsonRes)
-	return nil, nil
+	return nil, nil, nil
 }
 
 type paytmSearchResponse struct {

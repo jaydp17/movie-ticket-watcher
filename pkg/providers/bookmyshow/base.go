@@ -7,3 +7,5 @@ import (
 type Provider struct {
 	providers.Provider
 }
+
+type YesNo string

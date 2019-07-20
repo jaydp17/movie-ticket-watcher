@@ -5,12 +5,12 @@ import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 )
 
-type Cinema struct {
-	providers.Cinema
+type Movie struct {
+	providers.Movie
 	BookmyshowID string `json:"bookmyshowID,omitempty"`
 	PaytmID      string `json:"paytmID,omitempty"`
 }
 
-type Cinemas []Cinema
+type Movies []Movie
 
-var CinemaTableName = db.GetFullTableName("cinemas")
+var MovieTableName = db.GetFullTableName("movies")
