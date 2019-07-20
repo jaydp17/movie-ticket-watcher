@@ -33,7 +33,7 @@ func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []pro
 		for _, movieChild := range bmsMovie.ChildEvents {
 			groupID := bmsMovie.generateGroupID()
 			movies = append(movies, providers.Movie{
-				ID:           movieChild.generateID(groupID),
+				ID:           movieChild.EventCode,
 				GroupID:      groupID,
 				Title:        bmsMovie.EventTitle,
 				Language:     movieChild.EventLanguage,
@@ -48,7 +48,7 @@ func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []pro
 		lat := providers.Latitude(utils.ToFloat(bmsCinema.VenueLatitude))
 		lng := providers.Longitude(utils.ToFloat(bmsCinema.VenueLongitude))
 		cinemas = append(cinemas, providers.Cinema{
-			ID:        fmt.Sprintf("%s-%s", lat, lng),
+			ID:        bmsCinema.VenueCode,
 			Name:      bmsCinema.VenueName,
 			Provider:  bmsCinema.CompanyCode,
 			CityID:    "<generate city slug>",
@@ -106,9 +106,9 @@ type bmsQuickBookMovieChild struct {
 	EventIsAtmosEnabled YesNo
 }
 
-func (movieChild bmsQuickBookMovieChild) generateID(groupID string) string {
-	return strings.ToLower(fmt.Sprintf("%s-(%s)-%s", groupID, movieChild.EventDimension, movieChild.EventLanguage))
-}
+//func (movieChild bmsQuickBookMovieChild) generateID(groupID string) string {
+//	return strings.ToLower(fmt.Sprintf("%s-(%s)-%s", groupID, movieChild.EventDimension, movieChild.EventLanguage))
+//}
 func (movieChild bmsQuickBookMovieChild) getImageURL() string {
 	if len(movieChild.EventImageCode) > 0 {
 		return fmt.Sprintf("https://in.bmscdn.com/iedb/movies/images/mobile/thumbnail/xlarge/%s.jpg", movieChild.EventImageCode)
