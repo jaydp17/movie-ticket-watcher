@@ -13,3 +13,5 @@
 
 /bin
 .gobincache
+.idea/workspace.xml
+.idea/tasks.xml
