@@ -78,14 +78,14 @@ func (cities Cities) Write() error {
 	writeInputs := cities.dynamoBatchWriteInputs()
 	errorsCh := make(chan error)
 	wg := sync.WaitGroup{}
-	for _, input := range writeInputs {
+	for _, inputCopy := range writeInputs {
 		wg.Add(1)
-		go func(errCh chan<- error) {
+		go func(input *dynamodb.BatchWriteItemInput, errCh chan<- error) {
 			defer wg.Done()
 			if err := db.BatchWrite(input); err != nil {
 				errCh <- err
 			}
-		}(errorsCh)
+		}(inputCopy, errorsCh)
 	}
 
 	go func() {
