@@ -5,6 +5,8 @@ import (
 	"github.com/imroc/req"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/dao"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
+	"strconv"
+	"strings"
 )
 
 const macOsUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
@@ -25,8 +27,35 @@ func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []pro
 	if err := res.ToJSON(&jsonRes); err != nil {
 		return nil, nil, fmt.Errorf("failed to parse response from PayTM: %v", err)
 	}
-	fmt.Printf("paytm response\n%+v\n", jsonRes)
-	return nil, nil, nil
+
+	var movies []providers.Movie
+	for _, ptmMovie := range jsonRes.Movies {
+		for _, groupChild := range ptmMovie.Grouped {
+			groupID := ptmMovie.generateGroupID()
+			movies = append(movies, providers.Movie{
+				ID:           groupChild.MovieCode,
+				GroupID:      groupID,
+				Title:        ptmMovie.Title,
+				ScreenFormat: groupChild.Properties.getScreenFormat(),
+				Language:     ptmMovie.Language,
+				ImageURL:     ptmMovie.ImageURL,
+			})
+		}
+	}
+
+	var cinemas []providers.Cinema
+	for _, ptmCinema := range jsonRes.Cinemas {
+		cinemas = append(cinemas, providers.Cinema{
+			ID:        strconv.Itoa(ptmCinema.ID),
+			Name:      ptmCinema.Name,
+			Provider:  ptmCinema.ProviderChain,
+			CityID:    "<generate city slug>",
+			Latitude:  providers.Latitude(ptmCinema.Latitude),
+			Longitude: providers.Longitude(ptmCinema.Longitude),
+			Address:   ptmCinema.Address,
+		})
+	}
+	return movies, cinemas, nil
 }
 
 type paytmSearchResponse struct {
@@ -47,15 +76,29 @@ type paytmMovie struct {
 	Grouped      []paytmMovieGroup `json:"grouped"`
 }
 
+func (m paytmMovie) generateGroupID() string {
+	return strings.ReplaceAll(strings.ToLower(m.Title), " ", "-")
+}
+
 type paytmMovieGroup struct {
 	MovieCode  string                    `json:"movieCode"` // eg. "O9QJZ5"
-	Properties []paytmMovieGroupProperty `json:"properties"`
+	Properties paytmMovieGroupProperties `json:"properties"`
 }
 
 type paytmMovieGroupProperty struct {
 	Key     string `json:"key"`   // eg. "screenFormat"
 	Value   string `json:"value"` // eg. "IMAX 3D"
 	Display bool   `json:"display"`
+}
+type paytmMovieGroupProperties []paytmMovieGroupProperty
+
+func (props paytmMovieGroupProperties) getScreenFormat() string {
+	for _, prop := range props {
+		if prop.Key == "screenFormat" {
+			return prop.Value
+		}
+	}
+	return ""
 }
 
 type paytmCinema struct {
