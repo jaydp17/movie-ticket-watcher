@@ -10,3 +10,7 @@ make lambda-watch
 # it'll start an api gateway simulator on port 3000
 make lambda-serve
 ```
+
+## TODO
+
+Refer to [this Pivotal Tracker board](https://www.pivotaltracker.com/n/projects/2375220) for tasks & their status 
