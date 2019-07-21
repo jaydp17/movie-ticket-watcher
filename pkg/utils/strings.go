@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 )
 
@@ -12,4 +13,9 @@ func ToFloat(str string) float64 {
 		return 0.0
 	}
 	return floatNum
+}
+
+func KeepJustAlphaNumeric(str string) string {
+	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
+	return reg.ReplaceAllString(str, "")
 }

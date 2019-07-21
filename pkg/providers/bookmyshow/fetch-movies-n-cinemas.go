@@ -37,7 +37,7 @@ func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []pro
 				GroupID:      groupID,
 				Title:        bmsMovie.EventTitle,
 				Language:     movieChild.EventLanguage,
-				ScreenFormat: movieChild.EventDimension,
+				ScreenFormat: movieChild.screenFormat(),
 				ImageURL:     movieChild.getImageURL(),
 			})
 		}
@@ -106,9 +106,13 @@ type bmsQuickBookMovieChild struct {
 	EventIsAtmosEnabled YesNo
 }
 
-//func (movieChild bmsQuickBookMovieChild) generateID(groupID string) string {
-//	return strings.ToLower(fmt.Sprintf("%s-(%s)-%s", groupID, movieChild.EventDimension, movieChild.EventLanguage))
-//}
+func (movieChild bmsQuickBookMovieChild) screenFormat() string {
+	cleanFormat := utils.KeepJustAlphaNumeric(strings.ToLower(movieChild.EventDimension))
+	if cleanFormat == "4dx3d" {
+		return "4dx"
+	}
+	return cleanFormat
+}
 func (movieChild bmsQuickBookMovieChild) getImageURL() string {
 	if len(movieChild.EventImageCode) > 0 {
 		return fmt.Sprintf("https://in.bmscdn.com/iedb/movies/images/mobile/thumbnail/xlarge/%s.jpg", movieChild.EventImageCode)
