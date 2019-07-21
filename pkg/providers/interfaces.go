@@ -19,20 +19,17 @@ type City struct {
 }
 
 type Cinema struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Provider  string    `json:"provider"`
-	CityID    string    `json:"cityID"`
-	Latitude  Latitude  `json:"latitude"`
-	Longitude Longitude `json:"longitude"`
-	Address   string    `json:"address"`
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	Provider  string  `json:"provider"`
+	CityID    string  `json:"cityID"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Address   string  `json:"address"`
 }
-type Latitude float64
-type Longitude = Latitude
 
-func (l Latitude) String() string {
-	strWithExtraDecimal := fmt.Sprintf("%.4f", l)
-	return strWithExtraDecimal[:len(strWithExtraDecimal)-1]
+func (c Cinema) NameSlug() string {
+	return strings.ToLower(utils.KeepJustAlphaNumeric(c.Name))
 }
 
 type Movie struct {

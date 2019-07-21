@@ -14,3 +14,7 @@ type Cinema struct {
 type Cinemas []Cinema
 
 var CinemaTableName = db.GetFullTableName("cinemas")
+
+func (c Cinema) HasAllProviderIDs() bool {
+	return len(c.BookmyshowID) > 0 && len(c.PaytmID) > 0
+}

@@ -45,8 +45,8 @@ func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []pro
 
 	var cinemas []providers.Cinema
 	for _, bmsCinema := range jsonRes.Cinemas.BookMyShow.AiVN {
-		lat := providers.Latitude(utils.ToFloat(bmsCinema.VenueLatitude))
-		lng := providers.Longitude(utils.ToFloat(bmsCinema.VenueLongitude))
+		lat := utils.ToFloat(bmsCinema.VenueLatitude)
+		lng := utils.ToFloat(bmsCinema.VenueLongitude)
 		cinemas = append(cinemas, providers.Cinema{
 			ID:        bmsCinema.VenueCode,
 			Name:      bmsCinema.VenueName,

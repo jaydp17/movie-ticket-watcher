@@ -50,8 +50,8 @@ func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []pro
 			Name:      ptmCinema.Name,
 			Provider:  ptmCinema.ProviderChain,
 			CityID:    "<generate city slug>",
-			Latitude:  providers.Latitude(ptmCinema.Latitude),
-			Longitude: providers.Longitude(ptmCinema.Longitude),
+			Latitude:  ptmCinema.Latitude,
+			Longitude: ptmCinema.Longitude,
 			Address:   ptmCinema.Address,
 		})
 	}
