@@ -4,3 +4,6 @@ lambda-watch:
 lambda-serve:
 	# dummy aws credentials are required else it go to Disk for finding it on every request
 	sam local start-api --skip-pull-image
+
+test:
+	go test -v ./pkg/core
