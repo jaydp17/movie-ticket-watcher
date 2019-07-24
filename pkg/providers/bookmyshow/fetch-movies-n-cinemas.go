@@ -3,13 +3,12 @@ package bookmyshow
 import (
 	"fmt"
 	"github.com/imroc/req"
-	"github.com/jaydp17/movie-ticket-watcher/pkg/dao"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/utils"
 	"strings"
 )
 
-func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []providers.Cinema, error) {
+func (p Provider) FetchMoviesAndCinemas(bmsCityID string) ([]providers.Movie, []providers.Cinema, error) {
 	params := req.Param{
 		"cmd":                "QUICKBOOK",
 		"type":               "MT",
@@ -17,7 +16,7 @@ func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []pro
 	}
 	headers := req.Header{
 		"User-Agent": okHTTPUserAgent,
-		"Cookie":     fmt.Sprintf("Rgn=|Code=%s", city.BookmyshowID),
+		"Cookie":     fmt.Sprintf("Rgn=|Code=%s", bmsCityID),
 	}
 	res, err := req.Get("https://in.bookmyshow.com/serv/getData", params, headers)
 	if err != nil {
@@ -51,7 +50,7 @@ func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []pro
 			ID:        bmsCinema.VenueCode,
 			Name:      bmsCinema.VenueName,
 			Provider:  bmsCinema.CompanyCode,
-			CityID:    "<generate city slug>",
+			CityID:    "<generate cities slug>",
 			Latitude:  lat,
 			Longitude: lng,
 			Address:   bmsCinema.VenueAddress,

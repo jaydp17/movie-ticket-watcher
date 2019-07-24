@@ -1,4 +1,4 @@
-package core
+package cinemas
 
 import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
@@ -341,7 +341,7 @@ var bmsPtmMatchCinemas = map[string]string{
 }
 
 func TestMergeCinemas(t *testing.T) {
-	merged := MergeCinemas(bmsCinemas, ptmCinemas)
+	merged := Merge(bmsCinemas, ptmCinemas)
 
 	expectedMatches := len(bmsPtmMatchCinemas)
 	var actualMatches int

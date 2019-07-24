@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/jaydp17/movie-ticket-watcher/pkg/core"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/bookmyshow"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/paytm"
 )
@@ -16,14 +16,14 @@ func main() {
 	fmt.Printf("BMS cities: %+v\n", bmsCities)
 
 	ptm := paytm.Provider{}
-	pytmCities, err := ptm.FetchCities()
+	ptmCities, err := ptm.FetchCities()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("PayTM cities: %+v\n", pytmCities)
+	fmt.Printf("PayTM cities: %+v\n", ptmCities)
 
-	commonCities := core.MergeCities(bmsCities, pytmCities)
-	if err := commonCities.Write(); err != nil {
+	commonCities := cities.Merge(bmsCities, ptmCities)
+	if err := cities.Write(commonCities); err != nil {
 		panic(err)
 	}
 }

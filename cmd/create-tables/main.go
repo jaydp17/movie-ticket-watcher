@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/awserr"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/jaydp17/movie-ticket-watcher/pkg/dao"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 )
 
@@ -15,7 +15,7 @@ func main() {
 }
 
 func createCitiesTable() {
-	tableName := dao.CityTableName
+	tableName := cities.TableName
 	input := &dynamodb.CreateTableInput{
 		TableName: aws.String(tableName),
 		AttributeDefinitions: []dynamodb.AttributeDefinition{

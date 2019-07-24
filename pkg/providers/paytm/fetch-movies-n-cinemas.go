@@ -3,7 +3,6 @@ package paytm
 import (
 	"fmt"
 	"github.com/imroc/req"
-	"github.com/jaydp17/movie-ticket-watcher/pkg/dao"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 	"strconv"
 	"strings"
@@ -11,10 +10,10 @@ import (
 
 const macOsUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
 
-func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []providers.Cinema, error) {
+func (p Provider) FetchMoviesAndCinemas(ptmCityID string) ([]providers.Movie, []providers.Cinema, error) {
 	params := req.Param{
 		"groupResult": "true",
-		"city":        city.PaytmID,
+		"cities":      ptmCityID,
 		"channel":     "web",
 		"version":     "2",
 	}
@@ -49,7 +48,7 @@ func (p Provider) FetchMoviesAndCinemas(city dao.City) ([]providers.Movie, []pro
 			ID:        strconv.Itoa(ptmCinema.ID),
 			Name:      ptmCinema.Name,
 			Provider:  ptmCinema.ProviderChain,
-			CityID:    "<generate city slug>",
+			CityID:    "<generate cities slug>",
 			Latitude:  ptmCinema.Latitude,
 			Longitude: ptmCinema.Longitude,
 			Address:   ptmCinema.Address,

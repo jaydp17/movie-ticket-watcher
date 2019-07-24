@@ -6,4 +6,4 @@ lambda-serve:
 	sam local start-api --skip-pull-image
 
 test:
-	go test -v ./pkg/core
+	go test -v ./pkg/cinemas

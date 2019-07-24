@@ -1,32 +1,72 @@
-package core
+package cinemas
 
 import (
-	"github.com/jaydp17/movie-ticket-watcher/pkg/dao"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/utils"
 	"regexp"
 	"strings"
 )
 
-// mergeCinemasByName converts the name of the cinema to a slug by removing punctuation, lower casing, etc.
+func Merge(bmsCinemas, pytmCinemas []providers.Cinema) []Cinema {
+	cinemasMergedByName, bmsRemaining1, ptmRemaining1 := mergeByName(bmsCinemas, pytmCinemas)
+	cinemasMergedByDistance, bmsRemaining2, ptmRemaining2 := mergeByGeoDistance(bmsRemaining1, ptmRemaining1)
+
+	allMergedCinemas := make([]Cinema, 0, len(cinemasMergedByName)+len(cinemasMergedByDistance))
+	allMergedCinemas = append(allMergedCinemas, cinemasMergedByName...)
+	allMergedCinemas = append(allMergedCinemas, cinemasMergedByDistance...)
+
+	bmsFinalConverted := make([]Cinema, 0, len(bmsRemaining2))
+	for _, bCinema := range bmsRemaining2 {
+		c := Cinema{
+			ID:           bCinema.NameSlug(),
+			Name:         bCinema.Name,
+			Provider:     bCinema.Provider,
+			CityID:       bCinema.CityID,
+			Latitude:     bCinema.Latitude,
+			Longitude:    bCinema.Longitude,
+			Address:      bCinema.Address,
+			BookmyshowID: bCinema.ID,
+		}
+		bmsFinalConverted = append(bmsFinalConverted, c)
+	}
+	allMergedCinemas = append(allMergedCinemas, bmsFinalConverted...)
+
+	ptmFinalConverted := make([]Cinema, 0, len(ptmRemaining2))
+	for _, pCinema := range ptmRemaining2 {
+		c := Cinema{
+			ID:        pCinema.NameSlug(),
+			Name:      pCinema.Name,
+			Provider:  pCinema.Provider,
+			CityID:    pCinema.CityID,
+			Latitude:  pCinema.Latitude,
+			Longitude: pCinema.Longitude,
+			Address:   pCinema.Address,
+			PaytmID:   pCinema.ID,
+		}
+		ptmFinalConverted = append(ptmFinalConverted, c)
+	}
+	allMergedCinemas = append(allMergedCinemas, ptmFinalConverted...)
+
+	return allMergedCinemas
+}
+
+// mergeByName converts the name of the cinema to a slug by removing punctuation, lower casing, etc.
 // and then compares to see how many cinemas have the same NameSlug
-func mergeCinemasByName(bmsCinemas, ptmCinemas []providers.Cinema) (dao.Cinemas, []providers.Cinema, []providers.Cinema) {
+func mergeByName(bmsCinemas, ptmCinemas []providers.Cinema) ([]Cinema, []providers.Cinema, []providers.Cinema) {
 	maxCinemas := utils.MaxInt(len(bmsCinemas), len(ptmCinemas))
-	cinemasByName := make(map[string]dao.Cinema, maxCinemas)
+	cinemasByName := make(map[string]Cinema, maxCinemas)
 
 	// match using key = NameSlug
 	for _, cinema := range bmsCinemas {
 		nameSlug := cinema.NameSlug()
-		cinemaWithBmsID := dao.Cinema{
-			Cinema: providers.Cinema{
-				ID:        nameSlug,
-				Name:      cinema.Name,
-				Provider:  cinema.Provider,
-				CityID:    cinema.CityID,
-				Latitude:  cinema.Latitude,
-				Longitude: cinema.Longitude,
-				Address:   cinema.Address,
-			},
+		cinemaWithBmsID := Cinema{
+			ID:           nameSlug,
+			Name:         cinema.Name,
+			Provider:     cinema.Provider,
+			CityID:       cinema.CityID,
+			Latitude:     cinema.Latitude,
+			Longitude:    cinema.Longitude,
+			Address:      cinema.Address,
 			BookmyshowID: cinema.ID,
 		}
 		cinemasByName[nameSlug] = cinemaWithBmsID
@@ -37,24 +77,22 @@ func mergeCinemasByName(bmsCinemas, ptmCinemas []providers.Cinema) (dao.Cinemas,
 			existingCinema.PaytmID = cinema.ID
 			cinemasByName[nameSlug] = existingCinema
 		} else {
-			cinemaWithPytmID := dao.Cinema{
-				Cinema: providers.Cinema{
-					ID:        nameSlug,
-					Name:      cinema.Name,
-					Provider:  cinema.Provider,
-					CityID:    cinema.CityID,
-					Latitude:  cinema.Latitude,
-					Longitude: cinema.Longitude,
-					Address:   cinema.Address,
-				},
-				PaytmID: cinema.ID,
+			cinemaWithPytmID := Cinema{
+				ID:        nameSlug,
+				Name:      cinema.Name,
+				Provider:  cinema.Provider,
+				CityID:    cinema.CityID,
+				Latitude:  cinema.Latitude,
+				Longitude: cinema.Longitude,
+				Address:   cinema.Address,
+				PaytmID:   cinema.ID,
 			}
 			cinemasByName[nameSlug] = cinemaWithPytmID
 		}
 	}
 
 	// generate list of merged cinemas
-	mergedCinemas := make([]dao.Cinema, 0, maxCinemas)
+	mergedCinemas := make([]Cinema, 0, maxCinemas)
 	for _, c := range cinemasByName {
 		if c.HasAllProviderIDs() {
 			mergedCinemas = append(mergedCinemas, c)
@@ -82,11 +120,11 @@ func mergeCinemasByName(bmsCinemas, ptmCinemas []providers.Cinema) (dao.Cinemas,
 	return mergedCinemas, remainingBmsCinemas, remainingPtmCinemas
 }
 
-// mergeCinemasByGeoDistance clubs cinemas which are geographically within 50m from the other provider's cinema
+// mergeByGeoDistance clubs cinemas which are geographically within 50m from the other provider's cinema
 // and if we find multiple such cinemas, we use a fuzzy search to see which out of them matches the name of the cinema more
 // the later part of the function is really useful when we have cinemas like PVR Forum mall, where multiple cinemas are
 // in the same Geo location, i.e. on 4th floor there's the normal PVR & on the 5th floor there's PVR Gold
-func mergeCinemasByGeoDistance(bmsCinemas, ptmCinemas []providers.Cinema) (dao.Cinemas, []providers.Cinema, []providers.Cinema) {
+func mergeByGeoDistance(bmsCinemas, ptmCinemas []providers.Cinema) ([]Cinema, []providers.Cinema, []providers.Cinema) {
 	bmsMatchedIDs := make(map[string]bool, len(bmsCinemas))
 	ptmMatchedIDs := make(map[string]bool, len(ptmCinemas))
 
@@ -154,18 +192,16 @@ func mergeCinemasByGeoDistance(bmsCinemas, ptmCinemas []providers.Cinema) (dao.C
 		}
 	}
 
-	mergedCinemas := make([]dao.Cinema, 0, len(matches))
+	mergedCinemas := make([]Cinema, 0, len(matches))
 	for _, match := range matches {
-		cinema := dao.Cinema{
-			Cinema: providers.Cinema{
-				ID:        match.bms.NameSlug(),
-				Name:      match.bms.Name,
-				Provider:  match.bms.Provider,
-				CityID:    match.bms.CityID,
-				Latitude:  match.bms.Latitude,
-				Longitude: match.bms.Longitude,
-				Address:   match.bms.Address,
-			},
+		cinema := Cinema{
+			ID:           match.bms.NameSlug(),
+			Name:         match.bms.Name,
+			Provider:     match.bms.Provider,
+			CityID:       match.bms.CityID,
+			Latitude:     match.bms.Latitude,
+			Longitude:    match.bms.Longitude,
+			Address:      match.bms.Address,
 			BookmyshowID: match.bms.ID,
 			PaytmID:      match.ptm.ID,
 		}
