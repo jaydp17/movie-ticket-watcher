@@ -17,3 +17,14 @@ Resources:
           Properties:
             Path: /regions
             Method: GET
+
+  GetMoviesInCity:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: get-movies-in-a-city
+      Events:
+        Event1:
+          Type: Api
+          Properties:
+            Path: /movies/{regionCode}
+            Method: GET
