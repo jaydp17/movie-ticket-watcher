@@ -4,14 +4,22 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/httperror"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/lambdautils"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/movies"
 )
 
 type Response = events.APIGatewayProxyResponse
 
-func Handler(cityID string) []movies.Movie {
-	return make([]movies.Movie, 0)
+func Handler(cityID string) ([]movies.Movie, error) {
+	city, err := cities.FindByID(cityID)
+	if err != nil {
+		fmt.Printf("error fetching city: %+v", err)
+		return nil, httperror.New(404, "can't find that city")
+	}
+	moviesInTheCity := movies.Fetch(city)
+	return moviesInTheCity, nil
 }
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
@@ -22,7 +30,10 @@ func HandlerBoilerplate(req events.APIGatewayProxyRequest) (Response, error) {
 	}
 
 	regionCode := req.PathParameters["regionCode"]
-	result := Handler(regionCode)
+	result, err := Handler(regionCode)
+	if err != nil {
+		return lambdautils.ToResponse(err)
+	}
 	return lambdautils.ToResponse(result)
 }
 
@@ -31,7 +42,7 @@ func validate(req events.APIGatewayProxyRequest) error {
 	if !ok || len(regionCode) == 0 {
 		return fmt.Errorf("regionCode is required")
 	}
-	return fmt.Errorf("dummy error")
+	return nil
 }
 
 func main() {
