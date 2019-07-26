@@ -10,18 +10,18 @@ Resources:
   GetAllRegions:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: get-all-regions
+      Handler: get-cities
       Events:
         Event1:
           Type: Api
           Properties:
-            Path: /regions
+            Path: /cities
             Method: GET
 
   GetMoviesInCity:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: get-movies-in-a-city
+      Handler: get-movies
       Events:
         Event1:
           Type: Api
