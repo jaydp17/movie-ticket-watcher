@@ -2,6 +2,7 @@ package movies
 
 import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/moviecitylink"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/bookmyshow"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/paytm"
@@ -13,10 +14,34 @@ import (
 func Fetch(city cities.City) []Movie {
 	movies := fetchAndMerge(city)
 
-	writeErr := Write(movies)
-	if writeErr != nil {
-		log.Printf("error writing movies to db: %+v", writeErr)
-	}
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	// Write movies
+	go func() {
+		if writeErr := Write(movies); writeErr != nil {
+			log.Printf("error writing movies to db: %+v", writeErr)
+		}
+		wg.Done()
+	}()
+
+	// Write movie-city-link
+	go func() {
+		movieIDs := make([]string, 0, len(movies))
+		for _, m := range movies {
+			movieIDs = append(movieIDs, m.ID)
+		}
+		link := moviecitylink.MovieCityLink{
+			CityID:   city.ID,
+			MovieIDs: movieIDs,
+		}
+		if writeErr := moviecitylink.WriteOne(link); writeErr != nil {
+			log.Printf("error writing movieCityLink to db: %+v", writeErr)
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
 	return movies
 }
 

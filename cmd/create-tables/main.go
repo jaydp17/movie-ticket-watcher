@@ -9,6 +9,7 @@ import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cinemas"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/moviecitylink"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/movies"
 )
 
@@ -16,6 +17,7 @@ func main() {
 	createCitiesTable()
 	createMoviesTable()
 	createCinemasTable()
+	createMovieCityLink()
 }
 
 func createCitiesTable() {
@@ -95,6 +97,29 @@ func createCinemasTable() {
 			{
 
 				AttributeName: aws.String("ID"),
+				KeyType:       dynamodb.KeyTypeHash,
+			},
+		},
+		BillingMode: dynamodb.BillingModePayPerRequest,
+	}
+	req := db.Client.CreateTableRequest(input)
+	sendReq(&req)
+}
+
+func createMovieCityLink() {
+	tableName := moviecitylink.TableName
+	input := &dynamodb.CreateTableInput{
+		TableName: aws.String(tableName),
+		AttributeDefinitions: []dynamodb.AttributeDefinition{
+			{
+				AttributeName: aws.String("CityID"),
+				AttributeType: dynamodb.ScalarAttributeTypeS,
+			},
+		},
+		KeySchema: []dynamodb.KeySchemaElement{
+			{
+
+				AttributeName: aws.String("CityID"),
 				KeyType:       dynamodb.KeyTypeHash,
 			},
 		},
