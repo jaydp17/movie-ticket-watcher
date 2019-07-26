@@ -11,6 +11,16 @@ import (
 
 // Fetch cinemas from all the providers & merge them
 func Fetch(city cities.City) []Cinema {
+	cinemas := fetchAndMerge(city)
+
+	writeErr := Write(cinemas)
+	if writeErr != nil {
+		log.Printf("error writing cinemas to db: %+v", writeErr)
+	}
+	return cinemas
+}
+
+func fetchAndMerge(city cities.City) []Cinema {
 	bmsProvider := bookmyshow.Provider{}
 	ptmProvider := paytm.Provider{}
 

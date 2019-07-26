@@ -28,3 +28,14 @@ Resources:
           Properties:
             Path: /movies/{regionCode}
             Method: GET
+
+  GetCinemasInCity:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: get-cinemas
+      Events:
+        Event1:
+          Type: Api
+          Properties:
+            Path: /cinemas/{cityID}
+            Method: GET
