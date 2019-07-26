@@ -50,7 +50,7 @@ func (p Provider) FetchMoviesAndCinemas(bmsCityID string) ([]providers.Movie, []
 			ID:        bmsCinema.VenueCode,
 			Name:      bmsCinema.VenueName,
 			Provider:  bmsCinema.CompanyCode,
-			CityID:    "<generate cities slug>",
+			CityID:    "", // this is supposed to be the common cityID, which we don't have here, but will be filled later in merging phase
 			Latitude:  lat,
 			Longitude: lng,
 			Address:   bmsCinema.VenueAddress,

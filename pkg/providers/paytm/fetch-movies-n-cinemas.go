@@ -13,7 +13,7 @@ const macOsUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWeb
 func (p Provider) FetchMoviesAndCinemas(ptmCityID string) ([]providers.Movie, []providers.Cinema, error) {
 	params := req.Param{
 		"groupResult": "true",
-		"cities":      ptmCityID,
+		"city":      ptmCityID,
 		"channel":     "web",
 		"version":     "2",
 	}
@@ -48,7 +48,7 @@ func (p Provider) FetchMoviesAndCinemas(ptmCityID string) ([]providers.Movie, []
 			ID:        strconv.Itoa(ptmCinema.ID),
 			Name:      ptmCinema.Name,
 			Provider:  ptmCinema.ProviderChain,
-			CityID:    "<generate cities slug>",
+			CityID:    "", // this is supposed to be the common cityID, which we don't have here, but will be filled later in merging phase
 			Latitude:  ptmCinema.Latitude,
 			Longitude: ptmCinema.Longitude,
 			Address:   ptmCinema.Address,

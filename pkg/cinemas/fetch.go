@@ -34,6 +34,9 @@ func fetchAndMerge(city cities.City) []Cinema {
 		if err != nil {
 			log.Printf("error fetching cinemas from bms: %v", err)
 		}
+		for i := range bmsCinemas {
+			bmsCinemas[i].CityID = city.ID
+		}
 		wg.Done()
 	}()
 
@@ -43,6 +46,9 @@ func fetchAndMerge(city cities.City) []Cinema {
 		_, ptmCinemas, err = ptmProvider.FetchMoviesAndCinemas(city.PaytmID)
 		if err != nil {
 			log.Printf("error fetching cinemas from ptm: %v", err)
+		}
+		for i := range ptmCinemas {
+			ptmCinemas[i].CityID = city.ID
 		}
 		wg.Done()
 	}()
