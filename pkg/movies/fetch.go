@@ -2,12 +2,14 @@ package movies
 
 import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/moviecitylink"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/bookmyshow"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/paytm"
 	"log"
 	"sync"
+	"time"
 )
 
 // Fetch movies from all the providers & merge them
@@ -62,10 +64,10 @@ func fetchAndMerge(city cities.City) []Movie {
 		wg.Done()
 	}()
 
-	var ptmCinemas []providers.Movie
+	var ptmMovies []providers.Movie
 	go func() {
 		var err error
-		ptmCinemas, _, err = ptmProvider.FetchMoviesAndCinemas(city.PaytmID)
+		ptmMovies, _, err = ptmProvider.FetchMoviesAndCinemas(city.PaytmID)
 		if err != nil {
 			log.Printf("error fetching movies from ptm: %v", err)
 		}
@@ -74,6 +76,13 @@ func fetchAndMerge(city cities.City) []Movie {
 
 	wg.Wait()
 
-	mergedCinemas := Merge(bmsMovies, ptmCinemas)
-	return mergedCinemas
+	mergedMovies := Merge(bmsMovies, ptmMovies)
+
+	// set the TTL
+	ttl := db.UnixTime{Time: time.Now().Add(time.Minute * 5)}
+	for i, _ := range mergedMovies {
+		mergedMovies[i].TTL = ttl
+	}
+
+	return mergedMovies
 }

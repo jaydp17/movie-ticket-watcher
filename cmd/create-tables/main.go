@@ -45,7 +45,7 @@ func createCitiesTable() {
 
 func createMoviesTable() {
 	tableName := movies.TableName
-	input := &dynamodb.CreateTableInput{
+	createTableInput := &dynamodb.CreateTableInput{
 		TableName: aws.String(tableName),
 		AttributeDefinitions: []dynamodb.AttributeDefinition{
 			{
@@ -79,8 +79,28 @@ func createMoviesTable() {
 	//}
 	//input.GlobalSecondaryIndexes = append(input.GlobalSecondaryIndexes, cityIndex)
 
-	req := db.Client.CreateTableRequest(input)
+	req := db.Client.CreateTableRequest(createTableInput)
 	sendReq(&req)
+
+	describeTableInput := dynamodb.DescribeTableInput{TableName: aws.String(tableName)}
+	if err := db.Client.WaitUntilTableExists(context.TODO(), &describeTableInput); err != nil {
+		fmt.Printf("error waitng for table to be created: %v", err)
+		return
+	}
+
+	ttlInput := dynamodb.UpdateTimeToLiveInput{
+		TableName: aws.String(tableName),
+		TimeToLiveSpecification: &dynamodb.TimeToLiveSpecification{
+			AttributeName: aws.String("TTL"),
+			Enabled:       aws.Bool(true),
+		},
+	}
+	ttlReq := db.Client.UpdateTimeToLiveRequest(&ttlInput)
+	_, err := ttlReq.Send(context.TODO())
+	if err != nil {
+		fmt.Printf("error creating TTL attribute: %v", err)
+		return
+	}
 }
 
 func createCinemasTable() {

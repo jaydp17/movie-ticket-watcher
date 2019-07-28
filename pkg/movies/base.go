@@ -5,17 +5,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/config"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 )
 
 type Movie struct {
-	ID           string `json:"id"`
-	GroupID      string `json:"groupID"`
-	Title        string `json:"title"` // make sure there's no additional information in the title like (3D) or the Language
-	ScreenFormat string `json:"screenFormat"`
-	Language     string `json:"language"`
-	ImageURL     string `json:"imageURL"`
-	BookmyshowID string `json:"bookmyshowID"`
-	PaytmID      string `json:"paytmID"`
+	ID           string      `json:"id"`
+	GroupID      string      `json:"groupID"`
+	Title        string      `json:"title"` // make sure there's no additional information in the title like (3D) or the Language
+	ScreenFormat string      `json:"screenFormat"`
+	Language     string      `json:"language"`
+	ImageURL     string      `json:"imageURL"`
+	BookmyshowID string      `json:"bookmyshowID"`
+	PaytmID      string      `json:"paytmID"`
+	TTL          db.UnixTime `json:"ttl"`
 }
 
 var TableName = config.FullTableName("movies")
@@ -39,12 +41,16 @@ func (m Movie) DynamoAttributeValues() (map[string]dynamodb.AttributeValue, erro
 	if len(m.BookmyshowID) == 0 && len(m.PaytmID) == 0 {
 		return nil, fmt.Errorf("BookmyshowID & PaytmID both can't be empty: %+v", m)
 	}
+	if m.TTL.IsZero() {
+		return nil, fmt.Errorf("TTL can't be zero: %+v", m)
+	}
 	item := map[string]dynamodb.AttributeValue{
 		"ID":           {S: aws.String(m.ID)},
 		"GroupID":      {S: aws.String(m.GroupID)},
 		"Title":        {S: aws.String(m.Title)},
 		"ScreenFormat": {S: aws.String(m.ScreenFormat)},
 		"Language":     {S: aws.String(m.Language)},
+		"TTL":          {N: aws.String(m.TTL.UnixStr())},
 	}
 	if len(m.ImageURL) > 0 {
 		item["ImageURL"] = dynamodb.AttributeValue{S: aws.String(m.ImageURL)}
