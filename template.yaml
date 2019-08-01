@@ -5,6 +5,13 @@ Globals:
   Function:
     CodeUri: ./bin
     Runtime: go1.x
+    Environment:
+      Variables:
+        APP_ENV: !Ref APP_ENV
+
+Parameters:
+  APP_ENV:
+    Type: String
 
 Resources:
   GetAllRegions:
