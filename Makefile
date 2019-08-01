@@ -27,3 +27,11 @@ create-tables-staging:
 	env APP_ENV=staging go run cmd/create-tables/main.go
 create-tables-prod:
 	env APP_ENV=production go run cmd/create-tables/main.go
+
+## targets to fetch cities on particular environments
+fetch-cities-dev:
+	env APP_ENV=development go run cmd/fetch-cities/main.go
+fetch-cities-staging:
+	env APP_ENV=staging go run cmd/fetch-cities/main.go
+fetch-cities-prod:
+	env APP_ENV=production go run cmd/fetch-cities/main.go

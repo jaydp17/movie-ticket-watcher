@@ -18,6 +18,10 @@
 .gobincache
 .idea/workspace.xml
 .idea/tasks.xml
+.DS_Store
 
 # env vars
 .env.json
+
+# node_modules
+node_modules

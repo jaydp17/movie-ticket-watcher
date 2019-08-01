@@ -1,0 +1,23 @@
+{
+  "name": "movie-ticket-watcher",
+  "description": "Looks for a particular movie in a particular cinema &amp; notifies you as soon as it goes live",
+  "version": "0.0.1",
+  "author": "Jaydeep Solanki <jaydp17@gmail.com> (https://jaydp.com)",
+  "bugs": {
+    "url": "https://github.com/jaydp17/movie-ticket-watcher/issues"
+  },
+  "devDependencies": {
+    "serverless": "^1.49.0",
+    "serverless-pseudo-parameters": "^2.4.0"
+  },
+  "homepage": "https://github.com/jaydp17/movie-ticket-watcher#readme",
+  "keywords": [],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaydp17/movie-ticket-watcher.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
