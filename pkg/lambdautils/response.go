@@ -74,7 +74,7 @@ func toJson(data interface{}) (string, error) {
 }
 
 func toJsonError(errMsg string) (string, error) {
-	return toJson(struct{ error string }{error: errMsg})
+	return toJson(struct{ Error string `json:"error"` }{Error: errMsg})
 }
 
 func InternalServerErrorResp() Response {

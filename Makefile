@@ -13,6 +13,8 @@ watch:
 
 local-api:
 	sam local start-api --skip-pull-image --env-vars .env.json
+local-api-debug: ## to debug a lambda invocation with breakpoints
+	sam local start-api --skip-pull-image --env-vars .env.json -d 5986 --debugger-path .debugger --debug-args "-delveAPI=2"
 
 deploy-staging: build
 	serverless deploy --stage staging --verbose
@@ -35,3 +37,6 @@ fetch-cities-staging:
 	env APP_ENV=staging go run cmd/fetch-cities/main.go
 fetch-cities-prod:
 	env APP_ENV=production go run cmd/fetch-cities/main.go
+
+compile-debugger: ## because the binary runs inside linux container we need to compile the debugger with linux as the targer
+	GOARCH=amd64 GOOS=linux go build -o .debugger/dlv github.com/go-delve/delve/cmd/dlv

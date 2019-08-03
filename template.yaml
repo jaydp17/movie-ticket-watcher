@@ -5,6 +5,7 @@ Globals:
   Function:
     CodeUri: ./bin
     Runtime: go1.x
+    Timeout: 6
     Environment:
       Variables:
         APP_ENV: !Ref APP_ENV
@@ -46,3 +47,14 @@ Resources:
           Properties:
             Path: /cinemas/{cityID}
             Method: GET
+
+  Subscribe:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: subscribe
+      Events:
+        Event1:
+          Type: Api
+          Properties:
+            Path: /subscribe
+            Method: POST

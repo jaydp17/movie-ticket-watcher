@@ -7,26 +7,44 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbattribute"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/httperror"
 )
 
-func FindByID(cityID string) (City, error) {
-	input := &dynamodb.GetItemInput{
-		Key: map[string]dynamodb.AttributeValue{
-			"ID": {S: aws.String(cityID)},
-		},
-		TableName: aws.String(TableName),
-	}
-	req := db.Client.GetItemRequest(input)
-	result, err := req.Send(context.TODO())
-	if err != nil {
-		return City{}, err
-	}
+type CityResult struct {
+	City City
+	Err  error
+}
 
-	var city City
-	if err := dynamodbattribute.UnmarshalMap(result.Item, &city); err != nil {
-		return City{}, err
-	}
-	return city, nil
+func FindByID(ctx context.Context, cityID string) <-chan CityResult {
+	outputCh := make(chan CityResult)
+	go func(outputCh chan<- CityResult) {
+		defer close(outputCh)
+		input := &dynamodb.GetItemInput{
+			Key: map[string]dynamodb.AttributeValue{
+				"ID": {S: aws.String(cityID)},
+			},
+			TableName: aws.String(TableName),
+		}
+		req := db.Client.GetItemRequest(input)
+		result, err := req.Send(ctx)
+		if err != nil {
+			outputCh <- CityResult{City{}, err}
+			return
+		}
+
+		if result.Item == nil {
+			outputCh <- CityResult{City{}, httperror.New(404, "city not found")}
+			return
+		}
+
+		var city City
+		if err := dynamodbattribute.UnmarshalMap(result.Item, &city); err != nil {
+			outputCh <- CityResult{City{}, err}
+			return
+		}
+		outputCh <- CityResult{city, nil}
+	}(outputCh)
+	return outputCh
 }
 
 func All() <-chan City {

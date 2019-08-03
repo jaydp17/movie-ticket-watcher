@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -13,12 +14,13 @@ import (
 type Response = events.APIGatewayProxyResponse
 
 func Handler(cityID string) ([]movies.Movie, error) {
-	city, err := cities.FindByID(cityID)
-	if err != nil {
-		fmt.Printf("error fetching city: %+v", err)
+	outputCh := cities.FindByID(context.Background(), cityID)
+	result := <-outputCh
+	if result.Err != nil {
+		fmt.Printf("error fetching city: %+v", result.Err)
 		return nil, httperror.New(404, "can't find that city")
 	}
-	moviesInTheCity := movies.Fetch(city)
+	moviesInTheCity := movies.Fetch(result.City)
 	return moviesInTheCity, nil
 }
 
