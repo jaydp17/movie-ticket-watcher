@@ -2,7 +2,6 @@ package subscriptions
 
 import (
 	"context"
-	"fmt"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cinemas"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
@@ -49,34 +48,26 @@ func getMovieCityAndCinema(cityID, movieID, cinemaID string) (cities.City, movie
 	var city cities.City
 	var movie movies.Movie
 	var cinema cinemas.Cinema
-	fmt.Println("started to wait")
 	for cityOutput != nil || movieOutput != nil || cinemaOutput != nil {
-		fmt.Printf("for loop, %v, %v, %v\n", cityOutput, movieOutput, cinemaOutput)
 		//noinspection GoNilness
 		select {
 		case result := <-cityOutput:
-			fmt.Printf("city result: %+v\n", result)
 			if result.Err != nil {
 				cancel()
-				fmt.Printf("city error: %+v\n", result.Err)
 				return cities.City{}, movies.Movie{}, cinemas.Cinema{}, result.Err
 			}
 			city = result.City
 			cityOutput = nil
 		case result := <-movieOutput:
-			fmt.Printf("movie result: %+v\n", result)
 			if result.Err != nil {
 				cancel()
-				fmt.Printf("movie error: %+v\n", result.Err)
 				return cities.City{}, movies.Movie{}, cinemas.Cinema{}, result.Err
 			}
 			movie = result.Movie
 			movieOutput = nil
 		case result := <-cinemaOutput:
-			fmt.Printf("cinema result: %+v\n", result)
 			if result.Err != nil {
 				cancel()
-				fmt.Printf("cinema error: %+v\n", result.Err)
 				return cities.City{}, movies.Movie{}, cinemas.Cinema{}, result.Err
 			}
 			cinema = result.Cinema
