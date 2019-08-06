@@ -6,14 +6,16 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/lambdautils"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/subscriptions"
-	"time"
 )
 
 type Response = events.APIGatewayProxyResponse
 
 func Handler(payload Payload) (subscriptions.Subscription, error) {
-	subscription, err := subscriptions.New(payload.CityID, payload.MovieID, payload.CinemaID, time.Now())
+	subscription, err := subscriptions.New(payload.CityID, payload.MovieID, payload.CinemaID, payload.WebPushSubscription, payload.ScreeningDate.Time)
 	if err != nil {
+		return subscriptions.Subscription{}, err
+	}
+	if err := subscriptions.WriteOne(subscription); err != nil {
 		return subscriptions.Subscription{}, err
 	}
 	return subscription, nil

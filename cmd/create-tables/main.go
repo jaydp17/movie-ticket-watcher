@@ -11,6 +11,7 @@ import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/moviecitylink"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/movies"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/subscriptions"
 )
 
 func main() {
@@ -18,6 +19,7 @@ func main() {
 	createMoviesTable()
 	createCinemasTable()
 	createMovieCityLink()
+	createSubscriptionsTable()
 }
 
 func createCitiesTable() {
@@ -141,6 +143,36 @@ func createMovieCityLink() {
 
 				AttributeName: aws.String("CityID"),
 				KeyType:       dynamodb.KeyTypeHash,
+			},
+		},
+		BillingMode: dynamodb.BillingModePayPerRequest,
+	}
+	req := db.Client.CreateTableRequest(input)
+	sendReq(&req)
+}
+
+func createSubscriptionsTable() {
+	tableName := subscriptions.TableName
+	input := &dynamodb.CreateTableInput{
+		TableName: aws.String(tableName),
+		AttributeDefinitions: []dynamodb.AttributeDefinition{
+			{
+				AttributeName: aws.String("WebPushSubscription"),
+				AttributeType: dynamodb.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("CreatedAt"),
+				AttributeType: dynamodb.ScalarAttributeTypeN,
+			},
+		},
+		KeySchema: []dynamodb.KeySchemaElement{
+			{
+				AttributeName: aws.String("WebPushSubscription"),
+				KeyType:       dynamodb.KeyTypeHash,
+			},
+			{
+				AttributeName: aws.String("CreatedAt"),
+				KeyType:       dynamodb.KeyTypeRange,
 			},
 		},
 		BillingMode: dynamodb.BillingModePayPerRequest,

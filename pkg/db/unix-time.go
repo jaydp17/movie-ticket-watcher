@@ -1,8 +1,10 @@
 package db
 
 import (
+	"encoding/json"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -20,7 +22,10 @@ func (t UnixTime) MarshalJSON() ([]byte, error) {
 func (t *UnixTime) UnmarshalJSON(p []byte) error {
 	unixTime, err := strconv.ParseInt(string(p), 10, 64)
 	if err != nil {
-		return err
+		return &json.UnmarshalTypeError{
+			Value: string(p),
+			Type:  reflect.TypeOf(t),
+		}
 	}
 	t.Time = time.Unix(unixTime, 0)
 	return nil

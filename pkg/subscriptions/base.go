@@ -9,18 +9,19 @@ import (
 )
 
 type Subscription struct {
-	ID        string      `json:"id"`
-	CityID    string      `json:"cityID"`
-	MovieID   string      `json:"movieID"`
-	CinemaID  string      `json:"cinemaID"`
-	CreatedAt db.UnixTime `json:"createdAt"`
+	CityID              string          `json:"cityID"`
+	MovieID             string          `json:"movieID"`
+	CinemaID            string          `json:"cinemaID"`
+	WebPushSubscription string          `json:"webPushSubscription"`
+	ScreeningDate       db.YYYYMMDDTime `json:"screeningDate"`
+	CreatedAt           db.UnixTime     `json:"createdAt"`
 }
 
 var TableName = config.FullTableName("subscriptions")
 
 func (s Subscription) DynamoAttributeValues() (map[string]dynamodb.AttributeValue, error) {
-	if len(s.ID) == 0 {
-		return nil, fmt.Errorf("ID is empty: %+v", s)
+	if len(s.WebPushSubscription) == 0 {
+		return nil, fmt.Errorf("webPushSubscription is empty: %+v", s)
 	}
 	if len(s.CityID) == 0 {
 		return nil, fmt.Errorf("cityID is empty: %+v", s)
@@ -31,13 +32,17 @@ func (s Subscription) DynamoAttributeValues() (map[string]dynamodb.AttributeValu
 	if len(s.CinemaID) == 0 {
 		return nil, fmt.Errorf("cinemaID is empty: %+v", s)
 	}
+	if s.ScreeningDate.IsZero() {
+		return nil, fmt.Errorf("screeningDate is zero: %+v", s)
+	}
 
 	item := map[string]dynamodb.AttributeValue{
-		"ID":        {S: aws.String(s.ID)},
-		"CityID":    {S: aws.String(s.CityID)},
-		"MovieID":   {S: aws.String(s.MovieID)},
-		"CinemaID":  {S: aws.String(s.CinemaID)},
-		"CreatedAt": {N: aws.String(s.CreatedAt.UnixStr())},
+		"WebPushSubscription": {S: aws.String(s.WebPushSubscription)},
+		"CreatedAt":           {N: aws.String(s.CreatedAt.UnixStr())},
+		"CityID":              {S: aws.String(s.CityID)},
+		"MovieID":             {S: aws.String(s.MovieID)},
+		"CinemaID":            {S: aws.String(s.CinemaID)},
+		"ScreeningDate":       {S: aws.String(s.ScreeningDate.ToYYYYMMDD())},
 	}
 	return item, nil
 }

@@ -7,25 +7,28 @@ import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/httperror"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/movies"
-	"github.com/jaydp17/movie-ticket-watcher/pkg/utils"
 	"time"
 )
 
 // New validates all the city/movie/cinema IDs & creates a new Subscription object from those IDs
-func New(cityID, movieID, cinemaID string, date time.Time) (Subscription, error) {
+func New(cityID, movieID, cinemaID, webPushSubscription string, date time.Time) (Subscription, error) {
 	if date.IsZero() {
 		return Subscription{}, httperror.New(400, "date can't be zero")
+	}
+	if time.Now().After(date) {
+		return Subscription{}, httperror.New(400, "date can't be in the past")
 	}
 	city, movie, cinema, err := getMovieCityAndCinema(cityID, movieID, cinemaID)
 	if err != nil {
 		return Subscription{}, err
 	}
 	return Subscription{
-		ID:        utils.RandomString(5),
-		CityID:    city.ID,
-		MovieID:   movie.ID,
-		CinemaID:  cinema.ID,
-		CreatedAt: db.UnixTime{Time: time.Now()},
+		WebPushSubscription: webPushSubscription,
+		CreatedAt:           db.UnixTime{Time: time.Now()},
+		CityID:              city.ID,
+		MovieID:             movie.ID,
+		CinemaID:            cinema.ID,
+		ScreeningDate:       db.YYYYMMDDTime{Time: date},
 	}, nil
 }
 
