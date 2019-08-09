@@ -2,6 +2,7 @@ package providers
 
 import (
 	"fmt"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/utils"
 	"strings"
 )
@@ -10,6 +11,7 @@ import (
 type Provider interface {
 	FetchCities() ([]City, error)
 	FetchMoviesAndCinemas(city City) ([]Movie, []Cinema, error)
+	GetAvailableVenueCodes(cityID, movieID string, date db.YYYYMMDDTime) ([]string, error)
 }
 
 type City struct {

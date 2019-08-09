@@ -9,3 +9,8 @@ type Provider struct {
 }
 
 type YesNo string
+
+const (
+	okHTTPUserAgent = "okhttp/3.11.0"
+	token           = "67x1xa33b4x422b361ba"
+)

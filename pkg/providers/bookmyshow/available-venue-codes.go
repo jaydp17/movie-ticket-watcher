@@ -1,72 +1,40 @@
 package bookmyshow
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"log"
-	"net/http"
+	"fmt"
+	"github.com/imroc/req"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 )
 
-// BookMyShow struct
-type BookMyShow struct {
-}
-
-var client = &http.Client{}
-
-const (
-	okHTTPUserAgent = "okhttp/3.11.0"
-	token           = "67x1xa33b4x422b361ba"
-)
-
-// GetAvailableVenueCodes fetches all the venue codes where the given movie is available
-func (b *BookMyShow) GetAvailableVenueCodes(childEventCode, regionCode, dateStr string) ([]string, error) {
-	url := "https://in.bookmyshow.com/api/v2/mobile/showtimes/byevent"
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", okHTTPUserAgent)
-	q := req.URL.Query()
-	q.Add("regionCode", regionCode)
-	q.Add("eventCode", childEventCode)
-	q.Add("token", token)
-	q.Add("bmsId", "1.82650383.1552055894719")
-	q.Add("dateCode", dateStr)
-	req.URL.RawQuery = q.Encode()
-
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalln(err)
-		return []string{}, err
+// GetAvailableVenueCodes fetches available cinemas where the given movie is screening on that date
+func (p Provider) GetAvailableVenueCodes(bmsCityID, bmsChildEventID string, date db.YYYYMMDDTime) ([]string, error) {
+	params := req.Param{
+		"regionCode": bmsCityID,
+		"eventCode":  bmsChildEventID,
+		"dateCode":   date.Format("20060102"),
+		"token":      token,
+		"bmsId":      "1.82650383.1552055894719", // TODO: figure out what is this?
 	}
-	defer res.Body.Close()
-
-	responseStr, err := ioutil.ReadAll(res.Body)
+	headers := req.Header{
+		"User-Agent": okHTTPUserAgent,
+	}
+	res, err := req.Get("https://in.bookmyshow.com/api/v2/mobile/showtimes/byevent", params, headers)
 	if err != nil {
-		log.Fatalln(err)
-		return []string{}, err
+		return nil, fmt.Errorf("failed to fetch showtimes from BMS: %v", err)
 	}
 
-	var parsedResp bmsResponse
-	err = json.Unmarshal(responseStr, &parsedResp)
-	if err != nil {
-		log.Fatalln(err)
-		return []string{}, err
+	var jsonRes bmsResponse
+	if err := res.ToJSON(&jsonRes); err != nil {
+		return nil, fmt.Errorf("failed to parse response from BMS: %v", err)
 	}
 
-	if len(parsedResp.ShowDetails) == 0 {
+	if len(jsonRes.ShowDetails) == 0 {
 		// when there's no showDetails
 		return []string{}, nil
 	}
-
-	showDetail := parsedResp.ShowDetails[0]
+	showDetail := jsonRes.ShowDetails[0]
 	availableVenueCodes := showDetail.getVenueCodes()
 	return availableVenueCodes, nil
-}
-
-func (showDetail *BmsShowDetails) getVenueCodes() []string {
-	var venueCodes []string
-	for _, venue := range showDetail.Venues {
-		venueCodes = append(venueCodes, venue.VenueCode)
-	}
-	return venueCodes
 }
 
 type bmsResponse struct {
@@ -78,6 +46,14 @@ type BmsShowDetails struct {
 	Date   string
 	Event  bmsShowTimeEvent
 	Venues []bmsShowTimeVenue
+}
+
+func (showDetail BmsShowDetails) getVenueCodes() []string {
+	var venueCodes []string
+	for _, venue := range showDetail.Venues {
+		venueCodes = append(venueCodes, venue.VenueCode)
+	}
+	return venueCodes
 }
 
 type bmsShowTimeEvent struct {
@@ -116,7 +92,7 @@ type bmsShowTimeChildEvent struct {
 	EventName           string // eg. 'Avengers: Endgame (3D) - English'
 	EventGenre          string // eg. 'Action|Adventure|Fantasy'
 	EventDimension      string // eg. '3D' or 'IMAX 3D'
-	EventIsAtmosEnabled string // eg. 'Y' or 'N'
+	EventIsAtmosEnabled YesNo
 }
 
 type bmsShowTime struct {
