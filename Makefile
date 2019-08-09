@@ -15,6 +15,8 @@ local-api:
 	sam local start-api --skip-pull-image --env-vars .env.json
 local-api-debug: ## to debug a lambda invocation with breakpoints
 	sam local start-api --skip-pull-image --env-vars .env.json -d 5986 --debugger-path .debugger --debug-args "-delveAPI=2"
+local-cors-proxy: ## because stupid SAM CLI does't support CORS in local
+	npx lcp --proxyUrl http://localhost:3000 --proxyPartial ''
 
 deploy-staging: build
 	serverless deploy --stage staging --verbose

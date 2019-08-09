@@ -12,7 +12,8 @@ import (
 type Response = events.APIGatewayProxyResponse
 
 var commonHeaders = map[string]string{
-	"Content-Type": "application/json",
+	"Content-Type":                     "application/json",
+	"Access-Control-Allow-Origin":      "*",
 }
 
 // ToResponse takes any type of object, could be data or any error and tries to convert it to a proper APIGatewayProxyResponse
