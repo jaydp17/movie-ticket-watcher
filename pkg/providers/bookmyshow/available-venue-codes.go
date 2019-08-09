@@ -6,8 +6,8 @@ import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 )
 
-// GetAvailableVenueCodes fetches available cinemas where the given movie is screening on that date
-func (p Provider) GetAvailableVenueCodes(bmsCityID, bmsChildEventID string, date db.YYYYMMDDTime) ([]string, error) {
+// FetchAvailableVenueCodes fetches available cinemas where the given movie is screening on that date
+func (p Provider) FetchAvailableVenueCodes(bmsCityID, bmsChildEventID string, date db.YYYYMMDDTime) ([]string, error) {
 	params := req.Param{
 		"regionCode": bmsCityID,
 		"eventCode":  bmsChildEventID,

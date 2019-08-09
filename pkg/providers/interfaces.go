@@ -11,7 +11,7 @@ import (
 type Provider interface {
 	FetchCities() ([]City, error)
 	FetchMoviesAndCinemas(city City) ([]Movie, []Cinema, error)
-	GetAvailableVenueCodes(cityID, movieID string, date db.YYYYMMDDTime) ([]string, error)
+	FetchAvailableVenueCodes(cityID, movieID string, date db.YYYYMMDDTime) ([]string, error)
 }
 
 type City struct {

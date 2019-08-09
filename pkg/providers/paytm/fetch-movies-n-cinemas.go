@@ -13,7 +13,7 @@ const macOsUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWeb
 func (p Provider) FetchMoviesAndCinemas(ptmCityID string) ([]providers.Movie, []providers.Cinema, error) {
 	params := req.Param{
 		"groupResult": "true",
-		"city":      ptmCityID,
+		"city":        ptmCityID,
 		"channel":     "web",
 		"version":     "2",
 	}
@@ -80,18 +80,18 @@ func (m paytmMovie) generateGroupID() string {
 }
 
 type paytmMovieGroup struct {
-	MovieCode  string                    `json:"movieCode"` // eg. "O9QJZ5"
-	Properties paytmMovieGroupProperties `json:"properties"`
+	MovieCode  string               `json:"movieCode"` // eg. "O9QJZ5"
+	Properties paytmMovieProperties `json:"properties"`
 }
 
-type paytmMovieGroupProperty struct {
+type paytmMovieProperty struct {
 	Key     string `json:"key"`   // eg. "screenFormat"
 	Value   string `json:"value"` // eg. "IMAX 3D"
 	Display bool   `json:"display"`
 }
-type paytmMovieGroupProperties []paytmMovieGroupProperty
+type paytmMovieProperties []paytmMovieProperty
 
-func (props paytmMovieGroupProperties) getScreenFormat() string {
+func (props paytmMovieProperties) getScreenFormat() string {
 	for _, prop := range props {
 		if prop.Key == "screenFormat" {
 			return prop.Value
