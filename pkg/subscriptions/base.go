@@ -19,6 +19,11 @@ type Subscription struct {
 
 var TableName = config.FullTableName("subscriptions")
 
+// IsSimilar just checks for CityID, MovieID & ScreeningDate
+func (s Subscription) IsSimilar(s2 Subscription) bool {
+	return s.CityID == s2.CityID && s.MovieID == s2.MovieID && s.ScreeningDate.ToYYYYMMDD() == s2.ScreeningDate.ToYYYYMMDD()
+}
+
 func (s Subscription) DynamoAttributeValues() (map[string]dynamodb.AttributeValue, error) {
 	if len(s.WebPushSubscription) == 0 {
 		return nil, fmt.Errorf("webPushSubscription is empty: %+v", s)
