@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/awserr"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cinemas"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
@@ -15,14 +16,16 @@ import (
 )
 
 func main() {
-	createCitiesTable()
-	createMoviesTable()
-	createCinemasTable()
-	createMovieCityLink()
-	createSubscriptionsTable()
+	dbClient := db.NewClient()
+
+	createCitiesTable(dbClient)
+	createMoviesTable(dbClient)
+	createCinemasTable(dbClient)
+	createMovieCityLink(dbClient)
+	createSubscriptionsTable(dbClient)
 }
 
-func createCitiesTable() {
+func createCitiesTable(dbClient dynamodbiface.ClientAPI) {
 	tableName := cities.TableName
 	input := &dynamodb.CreateTableInput{
 		TableName: aws.String(tableName),
@@ -41,11 +44,11 @@ func createCitiesTable() {
 		},
 		BillingMode: dynamodb.BillingModePayPerRequest,
 	}
-	req := db.Client.CreateTableRequest(input)
+	req := dbClient.CreateTableRequest(input)
 	sendReq(&req)
 }
 
-func createMoviesTable() {
+func createMoviesTable(dbClient dynamodbiface.ClientAPI) {
 	tableName := movies.TableName
 	createTableInput := &dynamodb.CreateTableInput{
 		TableName: aws.String(tableName),
@@ -81,11 +84,11 @@ func createMoviesTable() {
 	//}
 	//input.GlobalSecondaryIndexes = append(input.GlobalSecondaryIndexes, cityIndex)
 
-	req := db.Client.CreateTableRequest(createTableInput)
+	req := dbClient.CreateTableRequest(createTableInput)
 	sendReq(&req)
 
 	describeTableInput := dynamodb.DescribeTableInput{TableName: aws.String(tableName)}
-	if err := db.Client.WaitUntilTableExists(context.TODO(), &describeTableInput); err != nil {
+	if err := dbClient.WaitUntilTableExists(context.TODO(), &describeTableInput); err != nil {
 		fmt.Printf("error waitng for table to be created: %v", err)
 		return
 	}
@@ -97,7 +100,7 @@ func createMoviesTable() {
 			Enabled:       aws.Bool(true),
 		},
 	}
-	ttlReq := db.Client.UpdateTimeToLiveRequest(&ttlInput)
+	ttlReq := dbClient.UpdateTimeToLiveRequest(&ttlInput)
 	_, err := ttlReq.Send(context.TODO())
 	if err != nil {
 		fmt.Printf("error creating TTL attribute: %v", err)
@@ -105,7 +108,7 @@ func createMoviesTable() {
 	}
 }
 
-func createCinemasTable() {
+func createCinemasTable(dbClient dynamodbiface.ClientAPI) {
 	tableName := cinemas.TableName
 	input := &dynamodb.CreateTableInput{
 		TableName: aws.String(tableName),
@@ -124,11 +127,11 @@ func createCinemasTable() {
 		},
 		BillingMode: dynamodb.BillingModePayPerRequest,
 	}
-	req := db.Client.CreateTableRequest(input)
+	req := dbClient.CreateTableRequest(input)
 	sendReq(&req)
 }
 
-func createMovieCityLink() {
+func createMovieCityLink(dbClient dynamodbiface.ClientAPI) {
 	tableName := moviecitylink.TableName
 	input := &dynamodb.CreateTableInput{
 		TableName: aws.String(tableName),
@@ -147,11 +150,11 @@ func createMovieCityLink() {
 		},
 		BillingMode: dynamodb.BillingModePayPerRequest,
 	}
-	req := db.Client.CreateTableRequest(input)
+	req := dbClient.CreateTableRequest(input)
 	sendReq(&req)
 }
 
-func createSubscriptionsTable() {
+func createSubscriptionsTable(dbClient dynamodbiface.ClientAPI) {
 	tableName := subscriptions.TableName
 	input := &dynamodb.CreateTableInput{
 		TableName: aws.String(tableName),
@@ -177,7 +180,7 @@ func createSubscriptionsTable() {
 		},
 		BillingMode: dynamodb.BillingModePayPerRequest,
 	}
-	req := db.Client.CreateTableRequest(input)
+	req := dbClient.CreateTableRequest(input)
 	sendReq(&req)
 }
 

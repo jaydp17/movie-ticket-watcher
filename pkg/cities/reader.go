@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbattribute"
-	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/httperror"
 )
 
@@ -15,7 +15,7 @@ type CityResult struct {
 	Err  error
 }
 
-func FindByID(ctx context.Context, cityID string) <-chan CityResult {
+func FindByID(ctx context.Context, dbClient dynamodbiface.ClientAPI, cityID string) <-chan CityResult {
 	outputCh := make(chan CityResult)
 	go func(outputCh chan<- CityResult) {
 		defer close(outputCh)
@@ -25,7 +25,7 @@ func FindByID(ctx context.Context, cityID string) <-chan CityResult {
 			},
 			TableName: aws.String(TableName),
 		}
-		req := db.Client.GetItemRequest(input)
+		req := dbClient.GetItemRequest(input)
 		result, err := req.Send(ctx)
 		if err != nil {
 			outputCh <- CityResult{City{}, err}
@@ -47,19 +47,19 @@ func FindByID(ctx context.Context, cityID string) <-chan CityResult {
 	return outputCh
 }
 
-func All() <-chan City {
+func All(dbClient dynamodbiface.ClientAPI) <-chan City {
 	scanInput := &dynamodb.ScanInput{
 		TableName:                aws.String(TableName),
 		ExpressionAttributeNames: map[string]string{"#NM": "Name", "#TC": "IsTopCity"},
 		ProjectionExpression:     aws.String("ID, #NM, #TC"),
 	}
-	req := db.Client.ScanRequest(scanInput)
+	req := dbClient.ScanRequest(scanInput)
 	paginator := dynamodb.NewScanPaginator(req)
 
 	pages := make(chan []map[string]dynamodb.AttributeValue)
 	cities := make(chan City)
 
-	go func() {
+	go func(pages <-chan []map[string]dynamodb.AttributeValue) {
 		for items := range pages {
 			for _, item := range items {
 				var city City
@@ -72,18 +72,19 @@ func All() <-chan City {
 			}
 		}
 		close(cities)
-	}()
+	}(pages)
 
-	for paginator.Next(context.TODO()) {
-		page := paginator.CurrentPage()
-		pages <- page.Items
-	}
-	close(pages)
-
-	if err := paginator.Err(); err != nil {
-		fmt.Println("error in paginator")
-		fmt.Println(err)
-	}
+	go func(pages chan<- []map[string]dynamodb.AttributeValue) {
+		for paginator.Next(context.TODO()) {
+			page := paginator.CurrentPage()
+			pages <- page.Items
+		}
+		close(pages)
+		if err := paginator.Err(); err != nil {
+			fmt.Println("error in paginator")
+			fmt.Println(err)
+		}
+	}(pages)
 
 	return cities
 }

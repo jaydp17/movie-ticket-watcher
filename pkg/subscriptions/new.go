@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cinemas"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
@@ -11,14 +12,14 @@ import (
 )
 
 // New validates all the city/movie/cinema IDs & creates a new Subscription object from those IDs
-func New(cityID, movieID, cinemaID, webPushSubscription string, date time.Time) (Subscription, error) {
+func New(dbClient dynamodbiface.ClientAPI, cityID, movieID, cinemaID, webPushSubscription string, date time.Time) (Subscription, error) {
 	if date.IsZero() {
 		return Subscription{}, httperror.New(400, "date can't be zero")
 	}
 	if time.Now().After(date) {
 		return Subscription{}, httperror.New(400, "date can't be in the past")
 	}
-	city, movie, cinema, err := getMovieCityAndCinema(cityID, movieID, cinemaID)
+	city, movie, cinema, err := getMovieCityAndCinema(dbClient, cityID, movieID, cinemaID)
 	if err != nil {
 		return Subscription{}, err
 	}
@@ -32,7 +33,7 @@ func New(cityID, movieID, cinemaID, webPushSubscription string, date time.Time) 
 	}, nil
 }
 
-func getMovieCityAndCinema(cityID, movieID, cinemaID string) (cities.City, movies.Movie, cinemas.Cinema, error) {
+func getMovieCityAndCinema(dbClient dynamodbiface.ClientAPI, cityID, movieID, cinemaID string) (cities.City, movies.Movie, cinemas.Cinema, error) {
 	if len(cityID) == 0 {
 		return cities.City{}, movies.Movie{}, cinemas.Cinema{}, httperror.New(400, "cityID can't be empty")
 	}
@@ -44,9 +45,9 @@ func getMovieCityAndCinema(cityID, movieID, cinemaID string) (cities.City, movie
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	cityOutput := cities.FindByID(ctx, cityID)
-	movieOutput := movies.FindByID(ctx, movieID)
-	cinemaOutput := cinemas.FindByID(ctx, cinemaID)
+	cityOutput := cities.FindByID(ctx, dbClient, cityID)
+	movieOutput := movies.FindByID(ctx, dbClient, movieID)
+	cinemaOutput := cinemas.FindByID(ctx, dbClient, cinemaID)
 
 	var city cities.City
 	var movie movies.Movie

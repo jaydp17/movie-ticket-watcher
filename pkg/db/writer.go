@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
 	"log"
 	"math"
 	"sync"
@@ -12,7 +13,7 @@ type Writable interface {
 	DynamoAttributeValues() (map[string]dynamodb.AttributeValue, error)
 }
 
-func Write(writables []Writable, tableName string) error {
+func Write(dbClient dynamodbiface.ClientAPI, writables []Writable, tableName string) error {
 	writeInputs := dynamoBatchWriteInputs(writables, tableName)
 	errorsCh := make(chan error)
 	wg := sync.WaitGroup{}
@@ -20,7 +21,7 @@ func Write(writables []Writable, tableName string) error {
 		wg.Add(1)
 		go func(input *dynamodb.BatchWriteItemInput, errCh chan<- error) {
 			defer wg.Done()
-			if err := BatchWrite(input); err != nil {
+			if err := BatchWrite(dbClient, input); err != nil {
 				errCh <- err
 			}
 		}(inputCopy, errorsCh)

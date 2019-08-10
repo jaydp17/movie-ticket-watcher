@@ -1,6 +1,7 @@
 package cinemas
 
 import (
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/bookmyshow"
@@ -10,10 +11,10 @@ import (
 )
 
 // Fetch cinemas from all the providers & merge them
-func Fetch(city cities.City) []Cinema {
+func Fetch(dbClient dynamodbiface.ClientAPI, city cities.City) []Cinema {
 	cinemas := fetchAndMerge(city)
 
-	writeErr := Write(cinemas)
+	writeErr := Write(dbClient, cinemas)
 	if writeErr != nil {
 		log.Printf("error writing cinemas to db: %+v", writeErr)
 	}

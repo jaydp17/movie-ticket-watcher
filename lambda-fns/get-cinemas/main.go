@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cinemas"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/httperror"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/lambdautils"
 )
@@ -14,13 +15,14 @@ import (
 type Response = events.APIGatewayProxyResponse
 
 func Handler(cityID string) ([]cinemas.Cinema, error) {
-	outputCh := cities.FindByID(context.Background(), cityID)
+	dbClient := db.NewClient()
+	outputCh := cities.FindByID(context.Background(), dbClient, cityID)
 	result := <-outputCh
 	if result.Err != nil {
 		fmt.Printf("error fetching city: %+v", result.Err)
 		return nil, httperror.New(404, "can't find that city")
 	}
-	cinemasInTheCity := cinemas.Fetch(result.City)
+	cinemasInTheCity := cinemas.Fetch(dbClient, result.City)
 	return cinemasInTheCity, nil
 }
 

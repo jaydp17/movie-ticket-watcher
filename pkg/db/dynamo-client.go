@@ -7,13 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/endpoints"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
 )
 
 const MaxBatchWriteItems = 25
 
-var Client *dynamodb.Client
-
-func init() {
+func NewClient() *dynamodb.Client {
 	// Using the SDK's default configuration, loading additional config
 	// and credentials values from the environment variables, shared
 	// credentials, and shared configuration files
@@ -26,12 +25,12 @@ func init() {
 	awsConfig.Region = endpoints.ApSouth1RegionID
 
 	// Using the Config value, create the DynamoDB Client
-	Client = dynamodb.New(awsConfig)
+	return dynamodb.New(awsConfig)
 }
 
 // ListTables allows you to list all the tables in this region
-func ListTables() {
-	req := Client.ListTablesRequest(&dynamodb.ListTablesInput{})
+func ListTables(dbClient dynamodbiface.ClientAPI) {
+	req := dbClient.ListTablesRequest(&dynamodb.ListTablesInput{})
 
 	// Send the request, and get the response or error back
 	resp, err := req.Send(context.Background())
@@ -42,8 +41,8 @@ func ListTables() {
 	fmt.Println("Response", resp)
 }
 
-func BatchWrite(input *dynamodb.BatchWriteItemInput) error {
-	req := Client.BatchWriteItemRequest(input)
+func BatchWrite(dbClient dynamodbiface.ClientAPI, input *dynamodb.BatchWriteItemInput) error {
+	req := dbClient.BatchWriteItemRequest(input)
 	result, err := req.Send(context.Background())
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {

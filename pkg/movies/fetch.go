@@ -1,6 +1,7 @@
 package movies
 
 import (
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/moviecitylink"
@@ -13,7 +14,7 @@ import (
 )
 
 // Fetch movies from all the providers & merge them
-func Fetch(city cities.City) []Movie {
+func Fetch(dbClient dynamodbiface.ClientAPI, city cities.City) []Movie {
 	movies := fetchAndMerge(city)
 
 	wg := sync.WaitGroup{}
@@ -21,7 +22,7 @@ func Fetch(city cities.City) []Movie {
 
 	// Write movies
 	go func() {
-		if writeErr := Write(movies); writeErr != nil {
+		if writeErr := Write(dbClient, movies); writeErr != nil {
 			log.Printf("error writing movies to db: %+v", writeErr)
 		}
 		wg.Done()
@@ -37,7 +38,7 @@ func Fetch(city cities.City) []Movie {
 			CityID:   city.ID,
 			MovieIDs: movieIDs,
 		}
-		if writeErr := moviecitylink.WriteOne(link); writeErr != nil {
+		if writeErr := moviecitylink.WriteOne(dbClient, link); writeErr != nil {
 			log.Printf("error writing movieCityLink to db: %+v", writeErr)
 		}
 		wg.Done()
@@ -79,7 +80,7 @@ func fetchAndMerge(city cities.City) []Movie {
 	mergedMovies := Merge(bmsMovies, ptmMovies)
 
 	// set the TTL
-	ttl := db.UnixTime{Time: time.Now().Add(time.Minute * 5)}
+	ttl := db.UnixTime{Time: time.Now().Add(time.Hour * 24)}
 	for i, _ := range mergedMovies {
 		mergedMovies[i].TTL = ttl
 	}

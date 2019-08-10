@@ -5,7 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbattribute"
-	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/httperror"
 )
 
@@ -14,7 +14,7 @@ type MovieResult struct {
 	Err   error
 }
 
-func FindByID(ctx context.Context, ID string) <-chan MovieResult {
+func FindByID(ctx context.Context, dbClient dynamodbiface.ClientAPI, ID string) <-chan MovieResult {
 	outputCh := make(chan MovieResult)
 	go func(outputCh chan<- MovieResult) {
 		defer close(outputCh)
@@ -24,7 +24,7 @@ func FindByID(ctx context.Context, ID string) <-chan MovieResult {
 			},
 			TableName: aws.String(TableName),
 		}
-		req := db.Client.GetItemRequest(input)
+		req := dbClient.GetItemRequest(input)
 		res, err := req.Send(ctx)
 		if err != nil {
 			outputCh <- MovieResult{Movie{}, err}

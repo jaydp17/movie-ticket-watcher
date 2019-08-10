@@ -5,12 +5,14 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/lambdautils"
 )
 
 // Handler has the core logic
 func Handler() []cities.City {
-	citiesChan := cities.All()
+	dbClient := db.NewClient()
+	citiesChan := cities.All(dbClient)
 	allCities := make([]cities.City, 0)
 	for city := range citiesChan {
 		allCities = append(allCities, city)

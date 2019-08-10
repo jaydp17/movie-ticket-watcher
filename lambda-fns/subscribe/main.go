@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/lambdautils"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/subscriptions"
 )
@@ -11,11 +12,13 @@ import (
 type Response = events.APIGatewayProxyResponse
 
 func Handler(payload Payload) (subscriptions.Subscription, error) {
-	subscription, err := subscriptions.New(payload.CityID, payload.MovieID, payload.CinemaID, payload.WebPushSubscription, payload.ScreeningDate.Time)
+	dbClient := db.NewClient()
+	subscription, err := subscriptions.New(dbClient, payload.CityID, payload.MovieID, payload.CinemaID, payload.WebPushSubscription, payload.ScreeningDate.Time)
 	if err != nil {
 		return subscriptions.Subscription{}, err
 	}
-	if err := subscriptions.WriteOne(subscription); err != nil {
+
+	if err := subscriptions.WriteOne(dbClient, subscription); err != nil {
 		return subscriptions.Subscription{}, err
 	}
 	return subscription, nil
