@@ -18,7 +18,7 @@ func (p Provider) FetchMoviesAndCinemas(bmsCityID string) ([]providers.Movie, []
 		"User-Agent": okHTTPUserAgent,
 		"Cookie":     fmt.Sprintf("Rgn=|Code=%s", bmsCityID),
 	}
-	res, err := req.Get("https://in.bookmyshow.com/serv/getData", params, headers)
+	res, err := req.Get(p.urlToFetchMoviesAndCinemas, params, headers)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to fetch BMS Cinemas & movies: %v", err)
 	}

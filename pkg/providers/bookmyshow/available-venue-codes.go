@@ -4,37 +4,53 @@ import (
 	"fmt"
 	"github.com/imroc/req"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 )
 
 // FetchAvailableVenueCodes fetches available cinemas where the given movie is screening on that date
-func (p Provider) FetchAvailableVenueCodes(bmsCityID, bmsChildEventID string, date db.YYYYMMDDTime) ([]string, error) {
-	params := req.Param{
-		"regionCode": bmsCityID,
-		"eventCode":  bmsChildEventID,
-		"dateCode":   date.Format("20060102"),
-		"token":      token,
-		"bmsId":      "1.82650383.1552055894719", // TODO: figure out what is this?
-	}
-	headers := req.Header{
-		"User-Agent": okHTTPUserAgent,
-	}
-	res, err := req.Get("https://in.bookmyshow.com/api/v2/mobile/showtimes/byevent", params, headers)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch showtimes from BMS: %v", err)
+func (p Provider) FetchAvailableVenueCodes(bmsCityID, bmsChildEventID string, date db.YYYYMMDDTime) <-chan providers.VenueCodesResult {
+	resultCh := make(chan providers.VenueCodesResult)
+
+	if len(bmsCityID) == 0 || len(bmsChildEventID) == 0 {
+		resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("bmsCityID or bmsChildEventID is empty")}
+		close(resultCh)
+		return resultCh
 	}
 
-	var jsonRes bmsResponse
-	if err := res.ToJSON(&jsonRes); err != nil {
-		return nil, fmt.Errorf("failed to parse response from BMS: %v", err)
-	}
+	go func() {
+		defer close(resultCh)
+		params := req.Param{
+			"regionCode": bmsCityID,
+			"eventCode":  bmsChildEventID,
+			"dateCode":   date.Format("20060102"),
+			"token":      token,
+			"bmsId":      "1.82650383.1552055894719", // TODO: figure out what is this?
+		}
+		headers := req.Header{
+			"User-Agent": okHTTPUserAgent,
+		}
+		res, err := req.Get(p.urlToFetchShowTimings, params, headers)
+		if err != nil {
+			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to fetch showtimes from BMS: %v", err)}
+			return
+		}
 
-	if len(jsonRes.ShowDetails) == 0 {
-		// when there's no showDetails
-		return []string{}, nil
-	}
-	showDetail := jsonRes.ShowDetails[0]
-	availableVenueCodes := showDetail.getVenueCodes()
-	return availableVenueCodes, nil
+		var jsonRes bmsResponse
+		if err := res.ToJSON(&jsonRes); err != nil {
+			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to fetch showtimes from BMS: %v", err)}
+			return
+		}
+
+		if len(jsonRes.ShowDetails) == 0 {
+			// when there's no showDetails
+			resultCh <- providers.VenueCodesResult{Data: []string{}}
+			return
+		}
+		showDetail := jsonRes.ShowDetails[0]
+		availableVenueCodes := showDetail.getVenueCodes()
+		resultCh <- providers.VenueCodesResult{Data: availableVenueCodes}
+	}()
+	return resultCh
 }
 
 type bmsResponse struct {

@@ -11,7 +11,7 @@ import (
 type Provider interface {
 	FetchCities() ([]City, error)
 	FetchMoviesAndCinemas(city City) ([]Movie, []Cinema, error)
-	FetchAvailableVenueCodes(cityID, movieID string, date db.YYYYMMDDTime) ([]string, error)
+	FetchAvailableVenueCodes(cityID, movieID string, date db.YYYYMMDDTime) <-chan VenueCodesResult
 }
 
 type City struct {
@@ -57,4 +57,9 @@ func (m Movie) Slug() string {
 func (m Movie) GroupSlug() string {
 	cleanTitle := utils.KeepJustAlphaNumeric(m.Title)
 	return strings.ToLower(cleanTitle)
+}
+
+type VenueCodesResult struct {
+	Data []string
+	Err  error
 }

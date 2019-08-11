@@ -1,9 +1,44 @@
 package subscriptions
 
-//func CheckForAvailableTickets(subscriptions []Subscription) <-chan Subscription {
-//	groupOfSubscriptions := groupSimilarSubscriptions(subscriptions)
-//
-//}
+import (
+	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
+	"sync"
+)
+
+func CheckForAvailableTickets(dbClient dynamodbiface.ClientAPI, allSubscriptions []Subscription) <-chan Subscription {
+	groupOfSubscriptions := groupSimilarSubscriptions(allSubscriptions)
+	outputCh := make(chan Subscription)
+	wg := sync.WaitGroup{}
+	wg.Add(len(groupOfSubscriptions))
+	for _, similarSubscriptions := range groupOfSubscriptions {
+		go func(similarSubscriptions groupSubscriptions) {
+			defer wg.Done()
+			sub := similarSubscriptions.subscriptions[0]
+			city, movie, cinema, err := sub.GetMovieCityAndCinema(dbClient)
+			if err != nil {
+				fmt.Printf("error in GetMovieCityAndCinema: %v", err)
+				return
+			}
+			areAvailable, err := AreTicketsAvailable(city, movie, cinema, sub.ScreeningDate)
+			if err != nil {
+				fmt.Printf("error in AreTicketsAvailable: %v", err)
+				return
+			}
+			if areAvailable {
+				for _, availableSubscription := range similarSubscriptions.subscriptions {
+					outputCh <- availableSubscription
+				}
+			}
+		}(similarSubscriptions)
+	}
+
+	go func() {
+		wg.Wait()
+		close(outputCh)
+	}()
+	return outputCh
+}
 
 func groupSimilarSubscriptions(subscriptions []Subscription) []groupSubscriptions {
 	groupedSubscriptions := make([]groupSubscriptions, 0)

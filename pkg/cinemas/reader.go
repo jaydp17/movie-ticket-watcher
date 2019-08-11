@@ -16,6 +16,11 @@ type CinemaResult struct {
 
 func FindByID(ctx context.Context, dbClient dynamodbiface.ClientAPI, ID string) <-chan CinemaResult {
 	outputCh := make(chan CinemaResult)
+	if len(ID) == 0 {
+		outputCh <- CinemaResult{Cinema{}, httperror.New(400, "cinemaID can't be empty")}
+		close(outputCh)
+		return outputCh
+	}
 	go func(outputCh chan<- CinemaResult) {
 		defer close(outputCh)
 		input := &dynamodb.GetItemInput{

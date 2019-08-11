@@ -5,54 +5,74 @@ import (
 	"fmt"
 	"github.com/imroc/req"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 	"strconv"
 )
 
-func (p Provider) FetchAvailableVenueCodes(ptmCityID, ptmMovieID string, date db.YYYYMMDDTime) ([]string, error) {
-	params := req.Param{
-		"groupResult": "true",
-		"city":        ptmCityID,
-		"moviecode":   ptmMovieID,
-		"fromdate":    date.ToYYYYMMDD(),
-		"channel":     "web",
-		"version":     "2",
-	}
-	headers := req.Header{"User-Agent": macOsUserAgent}
-	res, err := req.Get("https://paytm.com/v1/api/movies/search", params, headers)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch showtimes from PayTM: %v", err)
+func (p Provider) FetchAvailableVenueCodes(ptmCityID, ptmMovieID string, date db.YYYYMMDDTime) <-chan providers.VenueCodesResult {
+	resultCh := make(chan providers.VenueCodesResult)
+
+	if len(ptmCityID) == 0 || len(ptmMovieID) == 0 {
+		resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("ptmCityID or ptmMovieID is empty")}
+		close(resultCh)
+		return resultCh
 	}
 
-	strResponse, err := res.ToString()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get string response from PayTM: %v", err)
-	}
+	go func() {
+		defer close(resultCh)
 
-	jsonStr, err := strconv.Unquote(strResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get unquoted string: %v", err)
-	}
-
-	var jsonRes ptmShowTimeResponse
-	if err := json.Unmarshal([]byte(jsonStr), &jsonRes); err != nil {
-		return nil, err
-	}
-	if len(jsonRes.Error) != 0 {
-		return nil, fmt.Errorf("error from PayTM: %v", jsonRes.Error)
-	}
-
-	ptmMovie, ok := jsonRes.Movies[ptmMovieID]
-	if !ok {
-		return nil, fmt.Errorf("invalid response format from PayTM")
-	}
-
-	availableVenueCodes := make([]string, 0)
-	for _, session := range ptmMovie.Sessions {
-		if session.MovieCode == ptmMovieID {
-			availableVenueCodes = append(availableVenueCodes, strconv.Itoa(session.CinemaID))
+		params := req.Param{
+			"groupResult": "true",
+			"city":        ptmCityID,
+			"moviecode":   ptmMovieID,
+			"fromdate":    date.ToYYYYMMDD(),
+			"channel":     "web",
+			"version":     "2",
 		}
-	}
-	return availableVenueCodes, nil
+		headers := req.Header{"User-Agent": macOsUserAgent}
+		res, err := req.Get(p.urlToFetchShowTimings, params, headers)
+		if err != nil {
+			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to fetch showtimes from PayTM: %v", err)}
+			return
+		}
+
+		strResponse, err := res.ToString()
+		if err != nil {
+			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to get string response from PayTM: %v", err)}
+			return
+		}
+
+		jsonStr, err := strconv.Unquote(strResponse)
+		if err != nil {
+			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to get unquoted string: %v", err)}
+			return
+		}
+
+		var jsonRes ptmShowTimeResponse
+		if err := json.Unmarshal([]byte(jsonStr), &jsonRes); err != nil {
+			resultCh <- providers.VenueCodesResult{Err: err}
+			return
+		}
+		if len(jsonRes.Error) != 0 {
+			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("error from PayTM: %v", jsonRes.Error)}
+			return
+		}
+
+		ptmMovie, ok := jsonRes.Movies[ptmMovieID]
+		if !ok {
+			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("invalid response format from PayTM")}
+			return
+		}
+
+		availableVenueCodes := make([]string, 0)
+		for _, session := range ptmMovie.Sessions {
+			if session.MovieCode == ptmMovieID {
+				availableVenueCodes = append(availableVenueCodes, strconv.Itoa(session.CinemaID))
+			}
+		}
+		resultCh <- providers.VenueCodesResult{Data: availableVenueCodes}
+	}()
+	return resultCh
 }
 
 type ptmShowTimeResponse struct {

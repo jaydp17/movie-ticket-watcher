@@ -18,7 +18,7 @@ func (p Provider) FetchMoviesAndCinemas(ptmCityID string) ([]providers.Movie, []
 		"version":     "2",
 	}
 	headers := req.Header{"User-Agent": macOsUserAgent}
-	res, err := req.Get("https://apiproxy-moviesv2.paytm.com/v2/movies/search", params, headers)
+	res, err := req.Get(p.urlToFetchMoviesAndCinemas, params, headers)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to fetch PayTM Cinemas & movies: %v", err)
 	}

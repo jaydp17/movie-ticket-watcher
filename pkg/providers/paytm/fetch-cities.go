@@ -12,7 +12,7 @@ func (p Provider) FetchCities() ([]providers.City, error) {
 	headers := req.Header{
 		"User-Agent": androidUserAgent,
 	}
-	res, err := req.Get("https://tickets.paytm.com/v1/movies/cities", headers)
+	res, err := req.Get(p.urlToFetchCities, headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch PayTM cities: %v", err)
 	}

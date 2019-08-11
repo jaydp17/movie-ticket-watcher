@@ -17,6 +17,11 @@ type CityResult struct {
 
 func FindByID(ctx context.Context, dbClient dynamodbiface.ClientAPI, cityID string) <-chan CityResult {
 	outputCh := make(chan CityResult)
+	if len(cityID) == 0 {
+		outputCh <- CityResult{City{}, httperror.New(400, "cityID can't be empty")}
+		close(outputCh)
+		return outputCh
+	}
 	go func(outputCh chan<- CityResult) {
 		defer close(outputCh)
 		input := &dynamodb.GetItemInput{

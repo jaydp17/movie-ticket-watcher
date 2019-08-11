@@ -18,7 +18,7 @@ func (p Provider) FetchCities() ([]providers.City, error) {
 		"lang":       "en",
 		"User-Agent": okHTTPUserAgent,
 	}
-	res, err := req.Get("https://data-in.bookmyshow.com", params, headers)
+	res, err := req.Get(p.urlToFetchCities, params, headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch BMS cities: %v", err)
 	}
