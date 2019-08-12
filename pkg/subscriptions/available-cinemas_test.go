@@ -12,13 +12,12 @@ import (
 	"time"
 )
 
-type VenueCodesResult = providers.VenueCodesResult
-type mockProvider struct {
-	result VenueCodesResult
+type mockProviderForAreTicketsAvailable struct {
+	result providers.VenueCodesResult
 }
 
-func (p mockProvider) FetchAvailableVenueCodes(providerCityID, providerMovieID string, date db.YYYYMMDDTime) <-chan VenueCodesResult {
-	ch := make(chan VenueCodesResult)
+func (p mockProviderForAreTicketsAvailable) FetchAvailableVenueCodes(providerCityID, providerMovieID string, date db.YYYYMMDDTime) <-chan providers.VenueCodesResult {
+	ch := make(chan providers.VenueCodesResult)
 	go func() {
 		ch <- p.result
 		close(ch)
@@ -26,7 +25,8 @@ func (p mockProvider) FetchAvailableVenueCodes(providerCityID, providerMovieID s
 	return ch
 }
 
-func TestAreTicketsAvailable2(t *testing.T) {
+func TestAreTicketsAvailable(t *testing.T) {
+	type VenueCodesResult = providers.VenueCodesResult
 	city := cities.City{BookmyshowID: "BANG", PaytmID: "bengaluru"}
 	movie := movies.Movie{BookmyshowID: "MX012345", PaytmID: "QCB12345"}
 	cinema := cinemas.Cinema{BookmyshowID: "PVRMX", PaytmID: "123"}
@@ -50,8 +50,8 @@ func TestAreTicketsAvailable2(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bmsProvider := mockProvider{result: tt.bmsResult}
-			ptmProvider := mockProvider{result: tt.ptmResult}
+			bmsProvider := mockProviderForAreTicketsAvailable{result: tt.bmsResult}
+			ptmProvider := mockProviderForAreTicketsAvailable{result: tt.ptmResult}
 
 			got, err := AreTicketsAvailable(bmsProvider, ptmProvider, city, movie, cinema, date)
 			assert.Equal(t, tt.result, got)
