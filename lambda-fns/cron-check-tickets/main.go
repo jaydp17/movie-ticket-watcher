@@ -17,8 +17,8 @@ func Handler() {
 		allSubscriptions = append(allSubscriptions, subscription)
 	}
 
-	bmsProvider := bookmyshow.Provider{}
-	ptmProvider := paytm.Provider{}
+	bmsProvider := bookmyshow.New()
+	ptmProvider := paytm.New()
 	availableTickets := subscriptions.CheckForAvailableTickets(dbClient, bmsProvider, ptmProvider, allSubscriptions)
 	for sub := range availableTickets {
 		go notifications.WebPush(sub)

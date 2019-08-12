@@ -22,8 +22,8 @@ func Fetch(dbClient dynamodbiface.ClientAPI, city cities.City) []Cinema {
 }
 
 func fetchAndMerge(city cities.City) []Cinema {
-	bmsProvider := bookmyshow.Provider{}
-	ptmProvider := paytm.Provider{}
+	bmsProvider := bookmyshow.New()
+	ptmProvider := paytm.New()
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
