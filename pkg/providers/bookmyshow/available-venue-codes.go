@@ -5,6 +5,7 @@ import (
 	"github.com/imroc/req"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
+	"net/http"
 )
 
 // FetchAvailableVenueCodes fetches available cinemas where the given movie is screening on that date
@@ -32,6 +33,16 @@ func (p Provider) FetchAvailableVenueCodes(bmsCityID, bmsChildEventID string, da
 		res, err := req.Get(p.urlToFetchShowTimings, params, headers)
 		if err != nil {
 			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to fetch showtimes from BMS: %v", err)}
+			return
+		}
+
+		if res.Response().StatusCode != http.StatusOK {
+			respBody, err := res.ToString()
+			if err != nil {
+				resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to fetch showtimes from BMS: %v", err)}
+				return
+			}
+			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to fetch showtimes from BMS (with Status %s) and body: %v", res.Response().Status, respBody)}
 			return
 		}
 

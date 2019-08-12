@@ -46,4 +46,20 @@ func TestProvider_FetchAvailableVenueCodes(t *testing.T) {
 		assert.Len(t, venueCodesResult.Data, 4)
 		assert.Equal(t, venueCodesResult.Data, []string{"CFBS", "INMB", "INRZ", "PVEG"})
 	})
+
+	t.Run("no valid shows found", func(t *testing.T) {
+		bmsCityID := "BANG"
+		bmsChildEventID := "ET00108257"
+		date := db.YYYYMMDDTime{Time: time.Now()}
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"message": "No valid shows found for the given date & event"}`))
+		}))
+		defer server.Close()
+
+		p := Provider{urlToFetchShowTimings: server.URL}
+		venueCodesResult := <-p.FetchAvailableVenueCodes(bmsCityID, bmsChildEventID, date)
+		assert.NotNil(t, venueCodesResult.Err)
+	})
 }

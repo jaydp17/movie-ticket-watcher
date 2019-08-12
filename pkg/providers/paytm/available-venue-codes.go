@@ -6,6 +6,7 @@ import (
 	"github.com/imroc/req"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
+	"net/http"
 	"strconv"
 )
 
@@ -42,6 +43,16 @@ func (p Provider) FetchAvailableVenueCodes(ptmCityID, ptmMovieID string, date db
 			return
 		}
 
+		if res.Response().StatusCode != http.StatusOK {
+			respBody, err := res.ToString()
+			if err != nil {
+				resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to fetch showtimes from PayTM: %v", err)}
+				return
+			}
+			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to fetch showtimes from PayTM (with Status %s) and body: %v", res.Response().Status, respBody)}
+			return
+		}
+
 		jsonStr, err := strconv.Unquote(strResponse)
 		if err != nil {
 			resultCh <- providers.VenueCodesResult{Err: fmt.Errorf("failed to get unquoted string: %v", err)}
@@ -64,11 +75,16 @@ func (p Provider) FetchAvailableVenueCodes(ptmCityID, ptmMovieID string, date db
 			return
 		}
 
-		availableVenueCodes := make([]string, 0)
+		uniqAvailableVenueCodes := make(map[string]struct{})
 		for _, session := range ptmMovie.Sessions {
 			if session.MovieCode == ptmMovieID {
-				availableVenueCodes = append(availableVenueCodes, strconv.Itoa(session.CinemaID))
+				cinemaID := strconv.Itoa(session.CinemaID)
+				uniqAvailableVenueCodes[cinemaID] = struct{}{}
 			}
+		}
+		availableVenueCodes := make([]string, 0, len(uniqAvailableVenueCodes))
+		for cinemaID := range uniqAvailableVenueCodes {
+			availableVenueCodes = append(availableVenueCodes, cinemaID)
 		}
 		resultCh <- providers.VenueCodesResult{Data: availableVenueCodes}
 	}()
