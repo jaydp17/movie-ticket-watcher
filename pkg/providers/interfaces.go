@@ -7,11 +7,23 @@ import (
 	"strings"
 )
 
-// Provider is an interface
+// Provider is composed of Multiple single function interfaces to make it easier to mock while testing
 type Provider interface {
+	CitiesFetcher
+	MoviesAndCinemasFetcher
+	AvailableVenueCodesFetcher
+}
+
+type CitiesFetcher interface {
 	FetchCities() ([]City, error)
+}
+
+type MoviesAndCinemasFetcher interface {
 	FetchMoviesAndCinemas(city City) ([]Movie, []Cinema, error)
-	FetchAvailableVenueCodes(cityID, movieID string, date db.YYYYMMDDTime) <-chan VenueCodesResult
+}
+
+type AvailableVenueCodesFetcher interface {
+	FetchAvailableVenueCodes(providerCityID, providerMovieID string, date db.YYYYMMDDTime) <-chan VenueCodesResult
 }
 
 type City struct {

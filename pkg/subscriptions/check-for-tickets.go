@@ -3,10 +3,11 @@ package subscriptions
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 	"sync"
 )
 
-func CheckForAvailableTickets(dbClient dynamodbiface.ClientAPI, allSubscriptions []Subscription) <-chan Subscription {
+func CheckForAvailableTickets(dbClient dynamodbiface.ClientAPI, bms providers.AvailableVenueCodesFetcher, ptm providers.AvailableVenueCodesFetcher, allSubscriptions []Subscription) <-chan Subscription {
 	groupOfSubscriptions := groupSimilarSubscriptions(allSubscriptions)
 	outputCh := make(chan Subscription)
 	wg := sync.WaitGroup{}
@@ -20,7 +21,7 @@ func CheckForAvailableTickets(dbClient dynamodbiface.ClientAPI, allSubscriptions
 				fmt.Printf("error in GetMovieCityAndCinema: %v", err)
 				return
 			}
-			areAvailable, err := AreTicketsAvailable(city, movie, cinema, sub.ScreeningDate)
+			areAvailable, err := AreTicketsAvailable(bms, ptm, city, movie, cinema, sub.ScreeningDate)
 			if err != nil {
 				fmt.Printf("error in AreTicketsAvailable: %v", err)
 				return

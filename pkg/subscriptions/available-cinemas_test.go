@@ -1,0 +1,61 @@
+package subscriptions
+
+import (
+	"fmt"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/cinemas"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/movies"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
+	"github.com/stretchr/testify/assert"
+	"testing"
+	"time"
+)
+
+type VenueCodesResult = providers.VenueCodesResult
+type mockProvider struct {
+	result VenueCodesResult
+}
+
+func (p mockProvider) FetchAvailableVenueCodes(providerCityID, providerMovieID string, date db.YYYYMMDDTime) <-chan VenueCodesResult {
+	ch := make(chan VenueCodesResult)
+	go func() {
+		ch <- p.result
+		close(ch)
+	}()
+	return ch
+}
+
+func TestAreTicketsAvailable2(t *testing.T) {
+	city := cities.City{BookmyshowID: "BANG", PaytmID: "bengaluru"}
+	movie := movies.Movie{BookmyshowID: "MX012345", PaytmID: "QCB12345"}
+	cinema := cinemas.Cinema{BookmyshowID: "PVRMX", PaytmID: "123"}
+	date := db.YYYYMMDDTime{Time: time.Now()}
+
+	tests := []struct {
+		name      string
+		bmsResult VenueCodesResult
+		ptmResult VenueCodesResult
+		result    bool
+		err       error
+	}{
+		{name: "available in both providers", bmsResult: VenueCodesResult{Data: []string{cinema.BookmyshowID}}, ptmResult: VenueCodesResult{Data: []string{cinema.PaytmID}}, result: true},
+		{name: "available in just bms", bmsResult: VenueCodesResult{Data: []string{cinema.BookmyshowID}}, ptmResult: VenueCodesResult{Data: []string{}}, result: true},
+		{name: "available in just ptm", bmsResult: VenueCodesResult{Data: []string{}}, ptmResult: VenueCodesResult{Data: []string{cinema.PaytmID}}, result: true},
+		{name: "available in no provider", bmsResult: VenueCodesResult{Data: []string{}}, ptmResult: VenueCodesResult{Data: []string{}}, result: false},
+		{name: "error in bms request", bmsResult: VenueCodesResult{Err: fmt.Errorf("request blocked")}, ptmResult: VenueCodesResult{Data: []string{cinema.PaytmID}}, result: true},
+		{name: "error in ptm request", bmsResult: VenueCodesResult{Data: []string{cinema.BookmyshowID}}, ptmResult: VenueCodesResult{Err: fmt.Errorf("request blocked")}, result: true},
+		{name: "error in both providers request", bmsResult: VenueCodesResult{Err: fmt.Errorf("request blocked")}, ptmResult: VenueCodesResult{Err: fmt.Errorf("request blocked")}, result: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			bmsProvider := mockProvider{result: tt.bmsResult}
+			ptmProvider := mockProvider{result: tt.ptmResult}
+
+			got, err := AreTicketsAvailable(bmsProvider, ptmProvider, city, movie, cinema, date)
+			assert.Equal(t, tt.result, got)
+			assert.Equal(t, tt.err, err)
+		})
+	}
+}
