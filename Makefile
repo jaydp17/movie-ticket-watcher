@@ -22,7 +22,7 @@ deploy-staging: build
 	serverless deploy --stage staging --verbose
 
 test:
-	go test -v ./pkg/cinemas
+	go test -v ./...
 
 ## targets to create tables on particular environments
 create-tables-dev:
