@@ -15,6 +15,11 @@ type YYYYMMDDTime struct {
 	time.Time
 }
 
+func YYYYMMDDFromTime(t time.Time) YYYYMMDDTime {
+	year, month, day := t.Date()
+	return YYYYMMDDTime{Time: time.Date(year, month, day, 0, 0, 0, 0, t.Location())}
+}
+
 func (t YYYYMMDDTime) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(t.ToYYYYMMDD())), nil
 }

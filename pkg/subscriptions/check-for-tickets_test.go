@@ -39,7 +39,7 @@ func TestCheckForAvailableTickets(t *testing.T) {
 			MovieID:             "endgame",
 			CinemaID:            "pvrxm",
 			WebPushSubscription: "abcd",
-			ScreeningDate:       db.YYYYMMDDTime{Time: time.Now()},
+			ScreeningDate:       db.YYYYMMDDFromTime(time.Now()),
 		}
 		cinema := dbClient.cinema
 
@@ -47,11 +47,12 @@ func TestCheckForAvailableTickets(t *testing.T) {
 		ptm := mockProviderForCheckForAvailableTickets{result: VenueCodesResult{Data: []string{cinema.PaytmID}}}
 
 		availableSubscriptionsCh := CheckForAvailableTickets(dbClient, bms, ptm, []Subscription{s})
-		result := make([]Subscription, 0)
+		result := make([]AvailableTicketResult, 0)
 		for sub := range availableSubscriptionsCh {
 			result = append(result, sub)
 		}
-		assert.Equal(t, result, []Subscription{s})
+		assert.Equal(t, 1, len(result))
+		assert.Equal(t, result[0].Subscription, s)
 	})
 
 	t.Run("single available subscription from BMS only", func(t *testing.T) {
@@ -68,11 +69,12 @@ func TestCheckForAvailableTickets(t *testing.T) {
 		ptm := mockProviderForCheckForAvailableTickets{result: VenueCodesResult{Err: fmt.Errorf("request failed")}}
 
 		availableSubscriptionsCh := CheckForAvailableTickets(dbClient, bms, ptm, []Subscription{s})
-		result := make([]Subscription, 0)
+		result := make([]AvailableTicketResult, 0)
 		for sub := range availableSubscriptionsCh {
 			result = append(result, sub)
 		}
-		assert.Equal(t, result, []Subscription{s})
+		assert.Equal(t, 1, len(result))
+		assert.Equal(t, result[0].Subscription, s)
 	})
 
 	t.Run("single available subscription from PTM only", func(t *testing.T) {
@@ -89,11 +91,12 @@ func TestCheckForAvailableTickets(t *testing.T) {
 		ptm := mockProviderForCheckForAvailableTickets{result: VenueCodesResult{Data: []string{cinema.PaytmID}}}
 
 		availableSubscriptionsCh := CheckForAvailableTickets(dbClient, bms, ptm, []Subscription{s})
-		result := make([]Subscription, 0)
+		result := make([]AvailableTicketResult, 0)
 		for sub := range availableSubscriptionsCh {
 			result = append(result, sub)
 		}
-		assert.Equal(t, result, []Subscription{s})
+		assert.Equal(t, 1, len(result))
+		assert.Equal(t, result[0].Subscription, s)
 	})
 
 	t.Run("single un-available subscription", func(t *testing.T) {
@@ -109,11 +112,11 @@ func TestCheckForAvailableTickets(t *testing.T) {
 		ptm := mockProviderForCheckForAvailableTickets{result: VenueCodesResult{Err: fmt.Errorf("request failed")}}
 
 		availableSubscriptionsCh := CheckForAvailableTickets(dbClient, bms, ptm, []Subscription{s})
-		result := make([]Subscription, 0)
+		result := make([]AvailableTicketResult, 0)
 		for sub := range availableSubscriptionsCh {
 			result = append(result, sub)
 		}
-		assert.Equal(t, result, []Subscription{})
+		assert.Equal(t, 0, len(result))
 	})
 }
 
@@ -182,6 +185,7 @@ func TestGroupSimilarSubscriptions(t *testing.T) {
 }
 
 func newFakeGetCityMovieCinemaDB() *fakeGetCityMovieCinemaDB {
+	ttl := db.UnixTime{Time: time.Now()}
 	city := cities.City{
 		ID:           "BANG",
 		Name:         "Bengaluru",
@@ -197,7 +201,7 @@ func newFakeGetCityMovieCinemaDB() *fakeGetCityMovieCinemaDB {
 		ImageURL:     "",
 		BookmyshowID: "MX012345",
 		PaytmID:      "QF012345",
-		TTL:          db.UnixTime{Time: time.Now()},
+		TTL:          ttl,
 	}
 	cinema := cinemas.Cinema{
 		ID:           "cinemaID",
