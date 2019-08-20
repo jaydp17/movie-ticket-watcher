@@ -3,6 +3,7 @@ module github.com/jaydp17/movie-ticket-watcher
 go 1.12
 
 require (
+	github.com/SherClockHolmes/webpush-go v1.1.0
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc // indirect
 	github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4 // indirect
 	github.com/aws/aws-lambda-go v1.11.1

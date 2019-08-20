@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/notifications"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/bookmyshow"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/paytm"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/subscriptions"
+	"sync"
 )
 
 func Handler() {
@@ -20,9 +22,18 @@ func Handler() {
 	bmsProvider := bookmyshow.New()
 	ptmProvider := paytm.New()
 	availableTickets := subscriptions.CheckForAvailableTickets(dbClient, bmsProvider, ptmProvider, allSubscriptions)
-	for sub := range availableTickets {
-		go notifications.WebPush(sub)
+
+	wg := sync.WaitGroup{}
+	for result := range availableTickets {
+		wg.Add(1)
+		go func(result subscriptions.AvailableTicketResult) {
+			defer wg.Done()
+			if err := notifications.WebPush(result); err != nil {
+				fmt.Printf("error while sending push notification: %+v\n", err)
+			}
+		}(result)
 	}
+	wg.Wait()
 }
 
 func main() {

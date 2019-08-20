@@ -3,13 +3,21 @@ package subscriptions
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/cinemas"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/movies"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 	"sync"
 )
 
-func CheckForAvailableTickets(dbClient dynamodbiface.ClientAPI, bms providers.AvailableVenueCodesFetcher, ptm providers.AvailableVenueCodesFetcher, allSubscriptions []Subscription) <-chan Subscription {
+type AvailableTicketResult struct {
+	Subscription Subscription
+	Movie        movies.Movie
+	Cinema       cinemas.Cinema
+}
+
+func CheckForAvailableTickets(dbClient dynamodbiface.ClientAPI, bms providers.AvailableVenueCodesFetcher, ptm providers.AvailableVenueCodesFetcher, allSubscriptions []Subscription) <-chan AvailableTicketResult {
 	groupOfSubscriptions := groupSimilarSubscriptions(allSubscriptions)
-	outputCh := make(chan Subscription)
+	outputCh := make(chan AvailableTicketResult)
 	wg := sync.WaitGroup{}
 	wg.Add(len(groupOfSubscriptions))
 	for _, similarSubscriptions := range groupOfSubscriptions {
@@ -28,7 +36,11 @@ func CheckForAvailableTickets(dbClient dynamodbiface.ClientAPI, bms providers.Av
 			}
 			if areAvailable {
 				for _, availableSubscription := range similarSubscriptions.subscriptions {
-					outputCh <- availableSubscription
+					outputCh <- AvailableTicketResult{
+						Subscription: availableSubscription,
+						Movie:        movie,
+						Cinema:       cinema,
+					}
 				}
 			}
 		}(similarSubscriptions)
