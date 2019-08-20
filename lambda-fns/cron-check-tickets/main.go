@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/logger"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/notifications"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/bookmyshow"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers/paytm"
@@ -13,6 +13,7 @@ import (
 
 func Handler() {
 	dbClient := db.NewClient()
+	log := logger.New()
 
 	allSubscriptions := make([]subscriptions.Subscription, 0)
 	for subscription := range subscriptions.All(dbClient) {
@@ -29,10 +30,10 @@ func Handler() {
 		go func(result subscriptions.AvailableTicketResult) {
 			defer wg.Done()
 			if err := notifications.WebPush(result); err != nil {
-				fmt.Printf("error while sending push notification: %+v\n", err)
+				log.Errorf("error while sending push notification: %+v\n", err)
 			}
 			if err := subscriptions.MoveToArchive(dbClient, result.Subscription); err != nil {
-				fmt.Printf("%+v\n", err)
+				log.Errorf("%+v\n", err)
 			}
 		}(result)
 	}

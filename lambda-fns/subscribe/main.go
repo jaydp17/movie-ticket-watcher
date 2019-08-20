@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/lambdautils"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/logger"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/subscriptions"
 )
 
@@ -27,7 +27,8 @@ func Handler(payload Payload) (subscriptions.Subscription, error) {
 func HandlerBoilerplate(req events.APIGatewayProxyRequest) (Response, error) {
 	payload, validationErr := validate(req)
 	if validationErr != nil {
-		fmt.Printf("error validating request: %+v", validationErr)
+		log := logger.New()
+		log.Errorf("error validating request: %+v\n", validationErr)
 		return lambdautils.ToResponse(validationErr)
 	}
 	result, err := Handler(payload)

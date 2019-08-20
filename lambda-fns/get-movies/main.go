@@ -9,6 +9,7 @@ import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/httperror"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/lambdautils"
+	"github.com/jaydp17/movie-ticket-watcher/pkg/logger"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/movies"
 )
 
@@ -19,7 +20,8 @@ func Handler(cityID string) ([]movies.Movie, error) {
 	outputCh := cities.FindByID(context.Background(), dbClient, cityID)
 	result := <-outputCh
 	if result.Err != nil {
-		fmt.Printf("error fetching city: %+v", result.Err)
+		log := logger.New()
+		log.Errorf("error fetching city: %+v\n", result.Err)
 		return nil, httperror.New(404, "can't find that city")
 	}
 	moviesInTheCity := movies.Fetch(dbClient, result.City)
