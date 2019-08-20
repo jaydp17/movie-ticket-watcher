@@ -47,6 +47,7 @@ functions:
     package:
       include:
         - ./bin/get-cities
+
   get-movies:
     handler: bin/get-movies
     events:
@@ -56,6 +57,7 @@ functions:
     package:
       include:
         - ./bin/get-movies
+
   get-cinemas:
     handler: bin/get-cinemas
     events:
@@ -65,6 +67,17 @@ functions:
     package:
       include:
         - ./bin/get-cinemas
+
+  cron-check-tickets:
+    handler: bin/cron-check-tickets
+    events:
+      - schedule:
+          name: cron-check-tickets-${self:provider.stage}
+          rate: rate(10 minutes)
+          enabled: true
+    package:
+      include:
+        - ./bin/cron-check-tickets
 
 plugins:
   - serverless-pseudo-parameters

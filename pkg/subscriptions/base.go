@@ -18,6 +18,7 @@ type Subscription struct {
 }
 
 var TableName = config.FullTableName("subscriptions")
+var ArchiveTableName = config.FullTableName("subscriptions-archive")
 
 // IsSimilar just checks for CityID, MovieID & ScreeningDate
 func (s Subscription) IsSimilar(s2 Subscription) bool {

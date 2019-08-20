@@ -31,6 +31,9 @@ func Handler() {
 			if err := notifications.WebPush(result); err != nil {
 				fmt.Printf("error while sending push notification: %+v\n", err)
 			}
+			if err := subscriptions.MoveToArchive(dbClient, result.Subscription); err != nil {
+				fmt.Printf("%+v\n", err)
+			}
 		}(result)
 	}
 	wg.Wait()

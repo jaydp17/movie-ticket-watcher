@@ -23,6 +23,7 @@ func main() {
 	createCinemasTable(dbClient)
 	createMovieCityLink(dbClient)
 	createSubscriptionsTable(dbClient)
+	createSubscriptionsArchiveTable(dbClient)
 }
 
 func createCitiesTable(dbClient dynamodbiface.ClientAPI) {
@@ -156,6 +157,36 @@ func createMovieCityLink(dbClient dynamodbiface.ClientAPI) {
 
 func createSubscriptionsTable(dbClient dynamodbiface.ClientAPI) {
 	tableName := subscriptions.TableName
+	input := &dynamodb.CreateTableInput{
+		TableName: aws.String(tableName),
+		AttributeDefinitions: []dynamodb.AttributeDefinition{
+			{
+				AttributeName: aws.String("WebPushSubscription"),
+				AttributeType: dynamodb.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("CreatedAt"),
+				AttributeType: dynamodb.ScalarAttributeTypeN,
+			},
+		},
+		KeySchema: []dynamodb.KeySchemaElement{
+			{
+				AttributeName: aws.String("WebPushSubscription"),
+				KeyType:       dynamodb.KeyTypeHash,
+			},
+			{
+				AttributeName: aws.String("CreatedAt"),
+				KeyType:       dynamodb.KeyTypeRange,
+			},
+		},
+		BillingMode: dynamodb.BillingModePayPerRequest,
+	}
+	req := dbClient.CreateTableRequest(input)
+	sendReq(&req)
+}
+
+func createSubscriptionsArchiveTable(dbClient dynamodbiface.ClientAPI) {
+	tableName := subscriptions.ArchiveTableName
 	input := &dynamodb.CreateTableInput{
 		TableName: aws.String(tableName),
 		AttributeDefinitions: []dynamodb.AttributeDefinition{
