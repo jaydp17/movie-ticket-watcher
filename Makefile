@@ -2,7 +2,7 @@ functions := $(shell find lambda-fns -name \*main.go | awk -F'/' '{print $$2}')
 
 build: ## Build golang binaries
 	@for function in $(functions) ; do \
-		env GOOS=linux go build -ldflags="-s -w" -o bin/$$function lambda-fns/$$function/main.go ; \
+		env GOOS=linux go build -ldflags="-s -w" -o bin/$$function lambda-fns/$$function/*.go ; \
 	done
 
 clean:
