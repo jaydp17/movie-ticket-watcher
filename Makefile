@@ -18,8 +18,10 @@ local-api-debug: ## to debug a lambda invocation with breakpoints
 local-cors-proxy: ## because stupid SAM CLI does't support CORS in local
 	npx lcp --proxyUrl http://localhost:3000 --proxyPartial ''
 
-deploy-staging: build
-	serverless deploy --stage staging --verbose
+deploy-qa: build
+	serverless deploy --stage qa --verbose
+deploy-prod: build
+	serverless deploy --stage prod --verbose
 
 test:
 	go test -v ./...

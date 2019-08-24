@@ -9,6 +9,7 @@
   "devDependencies": {
     "local-cors-proxy": "^1.0.2",
     "serverless": "^1.49.0",
+    "serverless-domain-manager": "3.3.0",
     "serverless-pseudo-parameters": "^2.4.0"
   },
   "homepage": "https://github.com/jaydp17/movie-ticket-watcher#readme",
