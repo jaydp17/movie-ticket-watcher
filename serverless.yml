@@ -19,6 +19,7 @@ provider:
     lambda: true
   environment:
     APP_ENV: ${ssm:/movie-ticket-watcher/${self:provider.stage}/APP_ENV}
+    APP_STAGE: ${self:provider.stage}
     VAPID_PUBLIC_KEY: ${ssm:/movie-ticket-watcher/${self:provider.stage}/VAPID_PUBLIC_KEY}
     VAPID_PRIVATE_KEY: ${ssm:/movie-ticket-watcher/${self:provider.stage}/VAPID_PRIVATE_KEY}
   iamRoleStatements:
@@ -31,7 +32,7 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
         - dynamodb:BatchWriteItem
-      Resource: "arn:aws:dynamodb:${self:provider.region}:#{AWS::AccountId}:table/ticket-watcher-staging.*"
+      Resource: "arn:aws:dynamodb:${self:provider.region}:#{AWS::AccountId}:table/ticket-watcher-${self:provider.stage}.*"
 
 package:
   individually: true

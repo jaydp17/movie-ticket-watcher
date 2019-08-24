@@ -6,11 +6,13 @@ import (
 )
 
 var AppEnv string
+var AppStage string
 var IsProd bool
 var dynamoTablePrefix string
 
 func init() {
 	AppEnv = getEnvWithDefault("APP_ENV", "development")
+	AppStage = getEnvWithDefault("APP_STAGE", "dev")
 	IsProd = AppEnv == "production"
 	dynamoTablePrefix = fmt.Sprintf("ticket-watcher-%s", AppEnv)
 }
@@ -25,5 +27,5 @@ func getEnvWithDefault(envName string, fallback string) string {
 
 func FullTableName(tableName string) string {
 	const tablePrefix = "ticket-watcher"
-	return fmt.Sprintf("%s-%s.%s", tablePrefix, AppEnv, tableName)
+	return fmt.Sprintf("%s-%s.%s", tablePrefix, AppStage, tableName)
 }
