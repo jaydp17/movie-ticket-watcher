@@ -5,6 +5,7 @@ import (
 	"github.com/imroc/req"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/providers"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/utils"
+	"net/http"
 	"strings"
 )
 
@@ -21,6 +22,13 @@ func (p Provider) FetchMoviesAndCinemas(bmsCityID string) ([]providers.Movie, []
 	res, err := req.Get(p.urlToFetchMoviesAndCinemas, params, headers)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to fetch BMS Cinemas & movies: %v", err)
+	}
+	if res.Response().StatusCode != http.StatusOK {
+		respBody, err := res.ToString()
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to fetch BMS Cinemas & movies (res.ToString) failed: %v", err)
+		}
+		return nil, nil, fmt.Errorf("failed to fetch BMS Cinemas & movies (with Status %s) and body: %v", res.Response().Status, respBody)
 	}
 	var jsonRes bmsQuickBookResponse
 	if err := res.ToJSON(&jsonRes); err != nil {
