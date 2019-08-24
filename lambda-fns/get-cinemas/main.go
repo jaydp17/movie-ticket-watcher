@@ -10,6 +10,7 @@ import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/httperror"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/lambdautils"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/logger"
+	"sort"
 )
 
 type Response = events.APIGatewayProxyResponse
@@ -24,6 +25,9 @@ func Handler(cityID string) ([]cinemas.Cinema, error) {
 		return nil, httperror.New(404, "can't find that city")
 	}
 	cinemasInTheCity := cinemas.Fetch(dbClient, result.City)
+	sort.Slice(cinemasInTheCity, func(i, j int) bool {
+		return cinemasInTheCity[i].ID < cinemasInTheCity[j].ID
+	})
 	return cinemasInTheCity, nil
 }
 

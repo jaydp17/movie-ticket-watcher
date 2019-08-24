@@ -7,6 +7,7 @@ import (
 	"github.com/jaydp17/movie-ticket-watcher/pkg/cities"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/db"
 	"github.com/jaydp17/movie-ticket-watcher/pkg/lambdautils"
+	"sort"
 )
 
 // Handler has the core logic
@@ -17,6 +18,9 @@ func Handler() []cities.City {
 	for city := range citiesChan {
 		allCities = append(allCities, city)
 	}
+	sort.Slice(allCities, func(i, j int) bool {
+		return allCities[i].ID < allCities[j].ID
+	})
 	return allCities
 }
 
