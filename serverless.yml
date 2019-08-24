@@ -71,6 +71,16 @@ functions:
       include:
         - ./bin/get-cinemas
 
+  subscribe:
+    handler: bin/subscribe
+    events:
+      - http:
+          path: /subscribe
+          method: post
+    package:
+      include:
+        - ./bin/subscribe
+
   cron-check-tickets:
     handler: bin/cron-check-tickets
     events:
