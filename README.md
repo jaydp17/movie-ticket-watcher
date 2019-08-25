@@ -1,4 +1,12 @@
-# movie-ticket-watcher
+<p align="center">
+  <a href="https://movie-ticket-watcher.jaydp.com">
+    <img alt="Movie Ticket Watcher" src="/img/logo.png" width="60" />
+  </a>
+</p>
+<h1 align="center">
+  Movie Ticket Watcher (backend)
+</h1>
+
 Looks for a particular movie in a particular cinema &amp; notifies you as soon as it goes live
 
 # Local development
@@ -14,6 +22,11 @@ make local-api
 make local-cors-proxy
 ```
 
-## TODO
+## 🤝 Contributing
 
-Refer to [this Pivotal Tracker board](https://www.pivotaltracker.com/n/projects/2375220) for tasks & their status 
+Contributions, issues and feature requests are welcome.<br />
+Feel free to check [issues page](https://github.com/jaydp17/movie-ticket-watcher/issues) if you want to contribute.
+
+## :memo: License
+
+Licensed under the [MIT License](./LICENSE).
