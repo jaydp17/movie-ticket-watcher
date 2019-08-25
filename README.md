@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://movie-ticket-watcher.jaydp.com">
-    <img alt="Movie Ticket Watcher" src="/img/logo.png" width="60" />
+    <img alt="Movie Ticket Watcher" src="/img/logo.png" width="240" />
   </a>
 </p>
 <h1 align="center">
